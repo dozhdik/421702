@@ -1,0 +1,31 @@
+lib_component_ui_menu_optimize_warehouse = [*
+ui_menu_optimize_warehouse_placement <- ui_user_command_class_atom; ui_user_command_class_view_kb; ui_one_argument_command_class;;
+
+ui_menu_optimize_warehouse_placement 
+=> nrel_main_idtf: 
+	[Оптимизировать размещение складов]
+	(* <- lang_ru;; *);
+=> nrel_idtf: 
+	[Расчёт оптимального размещения логистических складов для торговой сети]
+	(* <- lang_ru;; *);;
+
+ui_menu_optimize_warehouse_placement 
+=> nrel_main_idtf: 
+	[Optimize warehouse placement]
+	(* <- lang_en;; *);
+=> nrel_idtf: 
+	[Calculation of optimal warehouse placement for trading network]
+	(* <- lang_en;; *);;
+
+ui_menu_optimize_warehouse_placement => ui_nrel_command_template:
+	[*
+		action_optimize_warehouses _-> ._action_optimize_warehouse_instance
+			(*
+				_-> rrel_1:: ui_arg_1;;
+			*);;
+		._action_optimize_warehouse_instance <-_ action;;
+	*];;
+
+ui_menu_optimize_warehouse_placement => ui_nrel_command_lang_template: [Оптимизировать размещение складов для $ui_arg_1] (* <- lang_ru;; *);;
+ui_menu_optimize_warehouse_placement => ui_nrel_command_lang_template: [Optimize warehouse placement for $ui_arg_1] (* <- lang_en;; *);;
+*];;

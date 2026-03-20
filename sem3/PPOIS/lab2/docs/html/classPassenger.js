@@ -1,0 +1,26 @@
+var classPassenger =
+[
+    [ "Passenger", "classPassenger.html#a6a903d5753c36ea57fc8dd52ce7b79f9", null ],
+    [ "addFavorite", "classPassenger.html#aeeadb7839a3abcfdc59ea486460595df", null ],
+    [ "calculateLoyaltyDiscount", "classPassenger.html#a02aa5c9d1ff843b6ceb67610a1644485", null ],
+    [ "calculateTotalBaggageWeight", "classPassenger.html#a9932a1fe4ad75d73c9140248c216bd51", null ],
+    [ "calculateTotalTravelCost", "classPassenger.html#a49d52111eca6d3c860e345019378f7d8", null ],
+    [ "canAccessRestricted", "classPassenger.html#a3f1445fcfcc08aab196df08c4ebfca49", null ],
+    [ "cancelReservation", "classPassenger.html#ab93e7a48af5adab8c922b1172b0145d9", null ],
+    [ "checkInForFlight", "classPassenger.html#ad5dab1894bce95def3b2db801ed515c3", null ],
+    [ "enterAirline", "classPassenger.html#a8ccd4ad681c8f7b148ce92ab9f0343ed", null ],
+    [ "getAccessLevel", "classPassenger.html#a8586556962b7cabd2e60d01e73147ab0", null ],
+    [ "getName", "classPassenger.html#a23748a4b4d9ec11b78ab4b438b4197b3", null ],
+    [ "getVisitDuration", "classPassenger.html#add6d53807e56dec1dd7f6b051eb12112", null ],
+    [ "hasValidVisa", "classPassenger.html#a98306568c1dc92c85be963c42026f77a", null ],
+    [ "joinGuidedTour", "classPassenger.html#aa5a1f02d0120a6ed30f8fb9421415e26", null ],
+    [ "purchaseTicket", "classPassenger.html#a3e24110a267d6ea39e3098c86bd62a4f", null ],
+    [ "requestSpecialMeal", "classPassenger.html#a1be6f7e3aab64cfd35a76fe12efd60c0", null ],
+    [ "viewAircraft", "classPassenger.html#a573dec6fef6c9e88b7093dfaa993f3df", null ],
+    [ "accessLevel", "classPassenger.html#ae4c2776ce1dd730faef4b3762f306c15", null ],
+    [ "favoriteCount", "classPassenger.html#ab47f4b1922bc52e3198ea77f974c5fbe", null ],
+    [ "guidedTour", "classPassenger.html#a7148767a203770f996b42e55fb667783", null ],
+    [ "hasTicket", "classPassenger.html#afab421f292edfd87e6fdfe0da112cdbf", null ],
+    [ "name", "classPassenger.html#ad0a67d663d731aa4151ad9275052334a", null ],
+    [ "visitDuration", "classPassenger.html#a9f049650aa60196874e3a0316e695ea1", null ]
+];

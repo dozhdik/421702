@@ -1,0 +1,22 @@
+concept_audit_logging
+=> nrel_main_idtf:
+   [аудит-логирование]
+   (*
+      <- lang_ru;;
+   *);
+=> nrel_main_idtf:
+   [audit logging]
+   (*
+      <- lang_en;;
+   *);
+<- rrel_explored_concept:
+   subject_domain_of_recording_and_storing_information_about_events_in_the_system;
+=> nrel_inclusion:
+   system_logs;
+   server_logs;
+   application_logs;
+=> nrel_definition: 
+  [Аудит-логирование — это процесс автоматической записи и сбора всех значимых событий в системе в специальные журналы (логи).]
+   (*
+       <- lang_ru;;
+   *);;

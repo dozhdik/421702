@@ -1,0 +1,27 @@
+var classAircraft =
+[
+    [ "Aircraft", "classAircraft.html#a942d4b7fd8a7e8ec12247d6389df5b4a", null ],
+    [ "addSize", "classAircraft.html#a961baea00ae19d5658f13fc5191ca681", null ],
+    [ "calculateDepreciation", "classAircraft.html#a832b33a778ae2da6aec2f75370471412", null ],
+    [ "calculateFuelConsumption", "classAircraft.html#af860bc373d4a7307cf74cc55e17ae3ae", null ],
+    [ "calculateMaintenanceCost", "classAircraft.html#a914e408317db8cc9ae2345be8e1c487d", null ],
+    [ "certify", "classAircraft.html#a4d4074c6667f190c2df85146109e937c", null ],
+    [ "getManufacturer", "classAircraft.html#a8b3cf57fe0813913de25464e18edf791", null ],
+    [ "getName", "classAircraft.html#a3172e6aef39bcf1ca801b71b05afb106", null ],
+    [ "getValue", "classAircraft.html#a0492a5038ef0b213cf9e9479517ebcc0", null ],
+    [ "getYear", "classAircraft.html#a1d5df6eb696e1a9584fccfd0dee6bd9a", null ],
+    [ "isAvailableForFlight", "classAircraft.html#a27b33e84ca1bededb4cb0bee1e752d5c", null ],
+    [ "isCertified", "classAircraft.html#a3cfcfc78439c90c8e148fed2d82e74bc", null ],
+    [ "isFragile", "classAircraft.html#af8826ce81167994a4f97666f8be3f98b", null ],
+    [ "needsInspection", "classAircraft.html#a9be60f322ac9697e30cbec88002e2453", null ],
+    [ "setInsuranceValue", "classAircraft.html#a78e19eca9a942093582d86e9d0bce62e", null ],
+    [ "useSize", "classAircraft.html#af7ec68e69da9582f6769349f32ade6fe", null ],
+    [ "certified", "classAircraft.html#abb0482788f36b672f008d9fd6077223e", null ],
+    [ "fragile", "classAircraft.html#ad063d6dd8bc2c04e9f46d8ba97a0db34", null ],
+    [ "insuranceValue", "classAircraft.html#ae680c9b8fc8ee189383c693ea7065f4f", null ],
+    [ "manufacturer", "classAircraft.html#a8a3cc1a074c1e5a349b2a3768a7f96f2", null ],
+    [ "name", "classAircraft.html#a39a80c384834a8f7e0d2ada60fd581ed", null ],
+    [ "size", "classAircraft.html#acbe86ceb02454bdbe9f15601491181f6", null ],
+    [ "value", "classAircraft.html#a9164578efc637fbbc52c14adb7f2b9b1", null ],
+    [ "year", "classAircraft.html#aa98dd2fbdb8e4d711446a30a9c92284d", null ]
+];

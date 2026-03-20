@@ -1,0 +1,112 @@
+// Ключевые узлы для модуля логистики
+// Action классы определены в C++ LogisticsKeynodes.hpp, здесь только концепты и отношения
+
+// Классы понятий
+concept_warehouse
+<- sc_node_class;
+=> nrel_main_idtf:
+	[склад] (* <- lang_ru;; *);
+	[warehouse] (* <- lang_en;; *);;
+
+concept_placement_variant
+<- sc_node_class;
+=> nrel_main_idtf:
+	[вариант размещения] (* <- lang_ru;; *);
+	[placement variant] (* <- lang_en;; *);;
+
+concept_network
+<- sc_node_class;
+=> nrel_main_idtf:
+	[торговая сеть] (* <- lang_ru;; *);
+	[trading network] (* <- lang_en;; *);;
+
+concept_shop
+<- sc_node_class;
+=> nrel_main_idtf:
+	[магазин] (* <- lang_ru;; *);
+	[shop] (* <- lang_en;; *);;
+
+// Отношения
+nrel_result
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[результат оптимизации*] (* <- lang_ru;; *);
+	[optimization result*] (* <- lang_en;; *);;
+
+nrel_loaded_data
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[распарсенные данные*] (* <- lang_ru;; *);
+	[parsed data*] (* <- lang_en;; *);;
+
+nrel_x
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[координата X*] (* <- lang_ru;; *);
+	[X coordinate*] (* <- lang_en;; *);;
+
+nrel_y
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[координата Y*] (* <- lang_ru;; *);
+	[Y coordinate*] (* <- lang_en;; *);;
+
+nrel_id
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[идентификатор*] (* <- lang_ru;; *);
+	[identifier*] (* <- lang_en;; *);;
+
+nrel_transport_cost
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[ежемесячные затраты*] (* <- lang_ru;; *);
+	[monthly cost*] (* <- lang_en;; *);;
+
+nrel_economy
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[процент экономии*] (* <- lang_ru;; *);
+	[economy percent*] (* <- lang_en;; *);;
+
+nrel_serves_shops
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[обслуживает магазины*] (* <- lang_ru;; *);
+	[serves shops*] (* <- lang_en;; *);;
+
+nrel_shop_count
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[количество магазинов*] (* <- lang_ru;; *);
+	[shop count*] (* <- lang_en;; *);;
+
+nrel_total_volume
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[общий грузооборот*] (* <- lang_ru;; *);
+	[total volume*] (* <- lang_en;; *);;
+
+nrel_warehouse
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[склад*] (* <- lang_ru;; *);
+	[warehouse*] (* <- lang_en;; *);;
+
+nrel_volume
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[объём поставок*] (* <- lang_ru;; *);
+	[delivery volume*] (* <- lang_en;; *);;
+
+nrel_recommendation
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[рекомендация*] (* <- lang_ru;; *);
+	[recommendation*] (* <- lang_en;; *);;
+
+nrel_is_valid
+<- sc_node_norole_relation;
+=> nrel_main_idtf:
+	[валидность*] (* <- lang_ru;; *);
+	[is valid*] (* <- lang_en;; *);;

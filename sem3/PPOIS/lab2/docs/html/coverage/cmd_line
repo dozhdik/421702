@@ -1,0 +1,1 @@
+genhtml coverage.info --output-directory coverage_html --ignore-errors inconsistent,missing,unsupported,corrupt,category,empty --no-function-coverage --no-branch-coverage

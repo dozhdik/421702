@@ -1,0 +1,4 @@
+test,hits,misses,phys_frames,virt_pages
+sequential,39995,5,32,512
+random,1294,18706,32,512
+temporal_locality,16074,3926,32,512

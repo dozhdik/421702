@@ -1,0 +1,25 @@
+var classBookingSystem =
+[
+    [ "BookingSystem", "classBookingSystem.html#a8e09cf396dca6c7831badaa2404474ee", null ],
+    [ "calculateBaggageFee", "classBookingSystem.html#aa9cba5418aeb2708bb373f6f91789923", null ],
+    [ "calculateTicketPrice", "classBookingSystem.html#a5ab1ade21946a16ca9131b7483b5e10d", null ],
+    [ "cancelBooking", "classBookingSystem.html#a9b3af694256b1b59c0789117ed105ebb", null ],
+    [ "cancelSeatReservation", "classBookingSystem.html#aa0a647bf4966b88c2a5c1ac1512db0c4", null ],
+    [ "checkFlightAvailability", "classBookingSystem.html#a3def408ea5af00f5e2e5cdb6ead1fdad", null ],
+    [ "checkVisaRequirement", "classBookingSystem.html#a0b7539c883aeff6ef054776308fdec6d", null ],
+    [ "createBooking", "classBookingSystem.html#a686d9270b6100dd6af5d8c91b9d99fa2", null ],
+    [ "getTotalBookings", "classBookingSystem.html#af445b69a5be60f8353ed6c27ab28c867", null ],
+    [ "getTotalRevenue", "classBookingSystem.html#a692bfc6f6ae26b7dbe327002a1cb10da", null ],
+    [ "isSystemActive", "classBookingSystem.html#a053434b16d98c722af31c59829f40309", null ],
+    [ "processPayment", "classBookingSystem.html#a6e03fc3413c9d8e71678d05c711d565f", null ],
+    [ "reserveSeat", "classBookingSystem.html#af1f32c7fa2ce24701aaba0fb24bbca27", null ],
+    [ "transferMoney", "classBookingSystem.html#ad2aa5d411e4dc5715e75f69dc4a26f97", null ],
+    [ "verifyPassword", "classBookingSystem.html#a7d7fb52176101792c1836c8a2cf9c4f1", null ],
+    [ "currentBookingFlight", "classBookingSystem.html#a59a7a086064dc45d795572f8d12c6888", null ],
+    [ "currentBookingPassenger", "classBookingSystem.html#a1ce8b9c55afa5d50ef66f688fb99c398", null ],
+    [ "isActive", "classBookingSystem.html#a8ff67a2fa23e2ef4118fd23a79becbb3", null ],
+    [ "maxBookings", "classBookingSystem.html#a2e45d95e8453aa8fbbc21247555265f8", null ],
+    [ "systemName", "classBookingSystem.html#a4a21035036bc8e7458ecff52b048712c", null ],
+    [ "totalBookings", "classBookingSystem.html#ac408be3ad03fd12c207a66461bd4bd33", null ],
+    [ "totalRevenue", "classBookingSystem.html#aad57f7537528b29276dab194cb8fe90a", null ]
+];

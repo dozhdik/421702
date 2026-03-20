@@ -1,0 +1,1 @@
+/usr/bin/c++ -g --coverage -fprofile-arcs -ftest-coverage -g --coverage -Wl,--dependency-file=CMakeFiles/lab2s.dir/link.d CMakeFiles/lab2s.dir/main.cpp.o CMakeFiles/lab2s.dir/airline.cpp.o -o lab2s

@@ -1,0 +1,274 @@
+{
+	"globsDependent" : 
+	[
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/*.cpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/LogisticsModule.cpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/*.hpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/LogisticsModule.hpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/agents/*.cpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/CostEstimatorAgent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/DataVerifierAgent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/FileLoaderAgent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/ShopClusteringAgent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/StorageOptimizationAgent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/VariantSelectorAgent.cpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/agents/*.hpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/CostEstimatorAgent.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/DataVerifierAgent.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/FileLoaderAgent.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/ShopClusteringAgent.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/StorageOptimizationAgent.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/agents/VariantSelectorAgent.hpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/keynodes/*.hpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/keynodes/LogisticsKeynodes.hpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/test/*.cpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/test/test_clustering_agent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/test/test_cost_calculation_agent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/test/test_csv_parser.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/test/test_data_validation_agent.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/test/test_integration.cpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/utils/*.cpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/utils/CsvParser.cpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/utils/GeometryUtils.cpp"
+			]
+		},
+		{
+			"expression" : "/home/alexander/421702/PPOIS/my-ostis-module/utils/*.hpp",
+			"listDirectories" : true,
+			"paths" : 
+			[
+				"/home/alexander/421702/PPOIS/my-ostis-module/utils/CsvParser.hpp",
+				"/home/alexander/421702/PPOIS/my-ostis-module/utils/GeometryUtils.hpp"
+			]
+		}
+	],
+	"inputs" : 
+	[
+		{
+			"path" : "CMakeLists.txt"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/CMakeFiles/4.2.0/CMakeSystem.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/conan_toolchain.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeSystemSpecificInitialize.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linux-Initialize.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/CMakeFiles/4.2.0/CMakeCXXCompiler.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeSystemSpecificInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeGenericSystem.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeInitializeConfigs.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linux.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/UnixPaths.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeCXXInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeLanguageInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Compiler/GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Compiler/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Compiler/CMakeCommonCompilerMacros.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linux-GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeCommonLanguageInclude.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Internal/CMakeCXXLinkerInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Internal/CMakeCommonLinkerInformation.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Linker/GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Linker/GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linker/Linux-GNU-CXX.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linker/Linux-GNU.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/Platform/Linker/GNU.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/alexander/.conan2/p/b/sc-ma0fc02a1c6c18e/p/lib/cmake/sc-machine/sc-machine-config-version.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/alexander/.conan2/p/b/sc-ma0fc02a1c6c18e/p/lib/cmake/sc-machine/sc-machine-config.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/alexander/.conan2/p/b/sc-ma0fc02a1c6c18e/p/lib/cmake/sc-machine/sc-machineTargets.cmake"
+		},
+		{
+			"isExternal" : true,
+			"path" : "/home/alexander/.conan2/p/b/sc-ma0fc02a1c6c18e/p/lib/cmake/sc-machine/sc-machineTargets-release.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/GTestConfigVersion.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/GTestConfig.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/cmakedeps_macros.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/GTestTargets.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/GTest-release-x86_64-data.cmake"
+		},
+		{
+			"isGenerated" : true,
+			"path" : "build/Release/generators/GTest-Target-release.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/CMakeFindDependencyMacro.cmake"
+		},
+		{
+			"isCMake" : true,
+			"isExternal" : true,
+			"path" : "/home/alexander/.local/share/pipx/venvs/cmake/lib/python3.12/site-packages/cmake/data/share/cmake-4.2/Modules/GoogleTest.cmake"
+		}
+	],
+	"kind" : "cmakeFiles",
+	"paths" : 
+	{
+		"build" : "/home/alexander/421702/PPOIS/my-ostis-module/build/Release",
+		"source" : "/home/alexander/421702/PPOIS/my-ostis-module"
+	},
+	"version" : 
+	{
+		"major" : 1,
+		"minor" : 1
+	}
+}

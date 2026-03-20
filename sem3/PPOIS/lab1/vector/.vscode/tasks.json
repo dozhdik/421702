@@ -1,0 +1,24 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build tests",
+            "type": "shell",
+            "command": "g++",
+            "args": [
+                "vector.cpp",
+                "tests.cpp",
+                "-o", "tests",
+                "-lUnitTest++"
+            ],
+            "group": "build",
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "run tests",
+            "type": "shell",
+            "dependsOn": "build tests",
+            "command": "./tests"
+        }
+    ]
+}

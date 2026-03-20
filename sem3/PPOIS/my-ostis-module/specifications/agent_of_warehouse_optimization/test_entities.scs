@@ -1,0 +1,28 @@
+// Тестовые сущности для проверки работы агента
+
+concept_test_input
+<- sc_node_class;
+=> nrel_main_idtf:
+	[тестовые входные данные] (* <- lang_ru;; *);
+	[test input data] (* <- lang_en;; *);;
+
+test_input_small
+<- concept_test_input;
+=> nrel_main_idtf:
+	[specifications/agent_of_warehouse_optimization/test_data/test_input_small.csv] (* <- lang_ru;; *);
+=> nrel_idtf:
+	[Тестовый набор 5 магазинов] (* <- lang_ru;; *);;
+
+test_input_medium
+<- concept_test_input;
+=> nrel_main_idtf:
+	[specifications/agent_of_warehouse_optimization/test_data/test_input_medium.csv] (* <- lang_ru;; *);
+=> nrel_idtf:
+	[Тестовый набор 10 магазинов] (* <- lang_ru;; *);;
+
+test_input_full
+<- concept_test_input;
+=> nrel_main_idtf:
+	[specifications/agent_of_warehouse_optimization/test_data/test_input_full.csv] (* <- lang_ru;; *);
+=> nrel_idtf:
+	[Тестовый набор 15 магазинов] (* <- lang_ru;; *);;

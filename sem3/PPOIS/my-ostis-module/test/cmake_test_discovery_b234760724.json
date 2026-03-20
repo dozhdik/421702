@@ -1,0 +1,81 @@
+{
+  "tests": 9,
+  "name": "AllTests",
+  "testsuites": [
+    {
+      "name": "ClusteringAgentTest",
+      "tests": 3,
+      "testsuite": [
+        {
+          "name": "Clustering_K1_K2_K3",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_clustering_agent.cpp",
+          "line": 98
+        },
+        {
+          "name": "Error_InvalidK_Zero",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_clustering_agent.cpp",
+          "line": 153
+        },
+        {
+          "name": "Error_K_MoreThanShops",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_clustering_agent.cpp",
+          "line": 174
+        }
+      ]
+    },
+    {
+      "name": "CostCalculationAgentTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "CostCalculation_AllVariants",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_cost_calculation_agent.cpp",
+          "line": 77
+        }
+      ]
+    },
+    {
+      "name": "CsvParserTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "ParseFiles",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_csv_parser.cpp",
+          "line": 19
+        },
+        {
+          "name": "Error_FileNotFound",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_csv_parser.cpp",
+          "line": 69
+        }
+      ]
+    },
+    {
+      "name": "DataValidationAgentTest",
+      "tests": 2,
+      "testsuite": [
+        {
+          "name": "ValidData",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_data_validation_agent.cpp",
+          "line": 69
+        },
+        {
+          "name": "InvalidData_TooFewShops",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_data_validation_agent.cpp",
+          "line": 107
+        }
+      ]
+    },
+    {
+      "name": "IntegrationTest",
+      "tests": 1,
+      "testsuite": [
+        {
+          "name": "FullPipeline",
+          "file": "\/home\/alexander\/421702\/PPOIS\/my-ostis-module\/test\/test_integration.cpp",
+          "line": 90
+        }
+      ]
+    }
+  ]
+}

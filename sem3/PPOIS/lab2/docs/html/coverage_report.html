@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Test Coverage Report</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 3px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .coverage-info {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-left: 4px solid #4CAF50;
+            border-radius: 4px;
+        }
+        .percentage {
+            font-size: 48px;
+            font-weight: bold;
+            color: #4CAF50;
+            margin: 20px 0;
+        }
+        .details {
+            color: #666;
+            margin-top: 10px;
+        }
+        .bar {
+            width: 100%;
+            height: 30px;
+            background-color: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+        .bar-fill {
+            height: 100%;
+            background-color: #4CAF50;
+            transition: width 0.3s ease;
+        }
+        .link-button {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+        }
+        .link-button:hover {
+            background-color: #45a049;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Test Coverage Report</h1>
+        <div class="coverage-info">
+            <div class="percentage">86.5%</div>
+            <div class="bar">
+                <div class="bar-fill" style="width: 86.5%"></div>
+            </div>
+            <div class="details">
+                <strong>Covered lines:</strong> 850<br>
+                <strong>Total lines:</strong> 983<br>
+                <strong>Uncovered lines:</strong> 133
+            </div>
+            <a href="coverage_html/index.html" class="link-button" target="_blank">View Detailed lcov Report</a>
+        </div>
+        <p style="color: #666; font-size: 14px;">
+            This report was generated automatically using gcov/lcov from test execution coverage data.
+            The coverage percentage represents the ratio of executed lines to total lines in the source code.
+        </p>
+    </div>
+</body>
+</html>

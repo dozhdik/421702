@@ -1,0 +1,35 @@
+rrel_audit_metadata
+=> nrel_main_idtf:
+   [метаданные аудита’]
+   (*
+      <- lang_ru;;
+   *);
+=> nrel_main_idtf:
+   [audit metadata’]
+   (*
+      <- lang_en;;
+   *);
+<- rrel_explored_relation:
+   subject_domain_of_recording_and_storing_information_about_events_in_the_system;
+<= nrel_inclusion:
+   rrel_membership;
+=> nrel_definitional_domain:
+   …
+   (*
+      <= nrel_set_union: {
+         concept_audit_logging;
+         concept_component 
+      };;
+   *);
+=> nrel_first_domain:
+   concept_audit_logging;
+=> nrel_second_domain:
+   concept_component;
+=> nrel_inclusion:  \\обозначить отношения
+   rrel_unique_event_id;
+   rrel_source_id;
+=> nrel_definition:
+  [Метаданные аудита — это вспомогательная, но критически важная информация, которая сопровождает каждую запись аудит-лога и обеспечивает её идентификацию, достоверность и пригодность для анализа и проверок.]
+   (*
+       <- lang_ru;;
+   *);;

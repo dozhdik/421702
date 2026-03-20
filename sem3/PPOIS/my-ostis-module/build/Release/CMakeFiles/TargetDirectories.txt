@@ -1,0 +1,4 @@
+/home/alexander/421702/PPOIS/my-ostis-module/build/Release/CMakeFiles/logistics-module.dir
+/home/alexander/421702/PPOIS/my-ostis-module/build/Release/CMakeFiles/logistics-module-tests.dir
+/home/alexander/421702/PPOIS/my-ostis-module/build/Release/CMakeFiles/edit_cache.dir
+/home/alexander/421702/PPOIS/my-ostis-module/build/Release/CMakeFiles/rebuild_cache.dir
