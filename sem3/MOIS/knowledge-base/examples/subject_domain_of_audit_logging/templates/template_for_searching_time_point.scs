@@ -1,0 +1,41 @@
+@search_event_time_strategy = {
+    rrel_init_template: {
+        rrel_template: [*
+            @input_param1 = (.._system <-_ concept_information_system);;
+            rrel_log _-> (.._system _-> .._log);;
+            @output_param1 = (.._log <-_ concept_audit_log);;
+        *];
+        rrel_template_input_params: { @input_param1 };
+        rrel_template_output_params: { @output_param1 }
+    } (* <- nrel_search_set_template;; *);
+
+    rrel_next_template: {
+        rrel_init_template: {
+            rrel_template: [*
+                @input_param1 = (.._log <-_ concept_audit_log);;
+                rrel_event _-> (.._log _-> .._event);;
+                @output_param1 = (.._event <-_ concept_audit_event);;
+            *];
+            rrel_template_input_params: { @input_param1 };
+            rrel_template_output_params: { @output_param1 }
+        } (* <- nrel_search_set_template;; *);
+
+        rrel_next_template: {
+            rrel_init_template: {
+                rrel_template: [*
+                    @input_param1 = (.._event <-_ concept_audit_event);;
+                    nrel_registration_time _-> (.._event _=> .._time_point);;
+                    @output_param1 = (.._time_point <-_ concept_time_point);;
+                *];
+                rrel_template_input_params: { @input_param1 };
+                rrel_template_output_params: { @output_param1 }
+            } (* <- nrel_search_template;; *)
+        } (* <- nrel_fixed_search_strategy_template;; *)
+    } (* <- nrel_fixed_search_strategy_template;; *)
+};;
+
+@search_event_time_strategy
+<- nrel_fixed_search_strategy_template;
+=> nrel_main_idtf:
+    [Шаблон поиска временных меток событий системы]
+    (* <- lang_ru;; *);;

@@ -1,0 +1,16 @@
+concept_device 
+<- sc_node_class; 
+=> nrel_main_idtf: 
+  [устройство] (* <- lang_ru;; *);
+<= nrel_inclusion:
+  concept_event;;
+
+workstation_01 
+<- concept_device; 
+=> nrel_main_idtf: 
+  [Рабочая станция админа 01] (* <- lang_ru;; *);;
+
+mobile_phone_05 
+<- concept_device; 
+=> nrel_main_idtf: 
+  [Мобильный телефон (iOS)] (* <- lang_ru;; *);;

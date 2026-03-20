@@ -1,0 +1,23 @@
+event_tx_551
+    <- concept_audit_event;
+    => nrel_ip_address: [172.16.0.1] (* <- concept_ip_v4_address;; *);
+    => nrel_administrator: ivanov_i_i;
+    => nrel_registration_time: [2025-05-20 11:00:00] (* <- concept_time_point;; *);
+    => nrel_device: mobile_phone_05;
+    => nrel_action_type: concept_create_action;;
+
+event_login_001
+    <- concept_audit_event;
+    => nrel_ip_address: [192.168.1.15] (* <- concept_ip_v4_address;; *);
+    => nrel_administrator: ivanov_i_i;
+    => nrel_registration_time: [2025-05-20 10:00:01] (* <- concept_time_point;; *);
+    => nrel_device: workstation_01;
+    => nrel_action_type: concept_read_action;;
+
+event_login_002
+    <- concept_audit_event;
+    => nrel_ip_address: [10.0.0.5] (* <- concept_ip_v4_address;; *);
+    => nrel_administrator: petrov_p_p;
+    => nrel_registration_time: [2025-05-20 10:15:30] (* <- concept_time_point;; *);
+    => nrel_device: workstation_01;
+    => nrel_action_type: concept_write_action;;

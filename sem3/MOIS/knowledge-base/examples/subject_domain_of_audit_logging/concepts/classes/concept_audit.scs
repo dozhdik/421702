@@ -1,0 +1,22 @@
+concept_audit 
+<- sc_node_class; 
+=> nrel_main_idtf: 
+  [тип действия] (* <- lang_ru;; *);;
+
+concept_read_action 
+<- sc_node_class; 
+<- concept_action_type; 
+=> nrel_main_idtf: 
+  [чтение] (* <- lang_ru;; *);;
+
+concept_write_action 
+<- sc_node_class; 
+<- concept_action_type; 
+=> nrel_main_idtf: 
+  [запись] (* <- lang_ru;; *);;
+
+concept_create_action 
+<- sc_node_class; 
+<- concept_action_type; 
+=> nrel_main_idtf: 
+  [создание объекта] (* <- lang_ru;; *);;

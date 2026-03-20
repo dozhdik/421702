@@ -1,0 +1,50 @@
+sc_agent_for_searching_administrator_actions
+=> nrel_main_idtf:
+	[sc-агент поиска событий заданного типа действия]
+    (*
+        <- lang_ru;;
+    *);
+	[sc-agent for searching events of specified action type]
+    (* 
+        <- lang_en;;
+    *);
+<- abstract_sc_agent;
+=> nrel_primary_initiation_condition: 
+	(sc_event_after_generate_outgoing_arc => action_initiated);
+=> nrel_initiation_condition_and_result: 
+	(..sc_agent_for_searching_administrator_actions_condition => ..sc_agent_for_searching_administrator_actions_result);
+=> nrel_sc_agent_action_class:
+	action_search_administrator_actions;
+<= nrel_sc_agent_key_sc_elements: 
+{
+	action_initiated;
+	action_search_administrator_actions
+};
+=> nrel_inclusion: 
+	.platform_independent_implementation_of_sc_agent_for_searching_administrator_actions
+	(*
+		<- platform_independent_abstract_sc_agent;;
+		<= nrel_sc_agent_program: 
+		{
+			agent_program_for_searching_administrator_actions;
+			program_for_searching_administrator_actions
+		};;
+
+		-> scp_agent_for_searching_administrator_actions
+		(*
+			<- active_sc_agent;;
+		*);;  
+	*);;
+
+..sc_agent_for_searching_administrator_actions_condition
+= [*
+	action_search_administrator_actions _-> .._action;;
+	action_initiated _-> .._action;;
+	.._action _-> rrel_1:: .._action_type;;
+*];;
+
+..sc_agent_for_searching_administrator_actions_result
+= [*
+	concept_audit_event _-> .._event;;
+*];;
+

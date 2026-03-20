@@ -1,0 +1,6 @@
+concept_audit_event
+<- sc_node_class;
+=> nrel_main_idtf:
+    [событие аудита] (* <- lang_ru;; *);
+<= nrel_inclusion:
+    concept_event;;

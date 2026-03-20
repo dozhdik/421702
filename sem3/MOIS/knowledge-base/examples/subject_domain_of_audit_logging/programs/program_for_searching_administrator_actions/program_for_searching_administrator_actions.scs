@@ -1,0 +1,265 @@
+// ==========================================================================================
+// PROGRAM: Program for searching audit events by action type
+// ==========================================================================================
+// PURPOSE:
+//   This scp-program searches for all audit events of the specified action type
+//   and collects them into a result set.
+//
+// INPUT PARAMETERS:
+//   .._action_type - action type whose events need to be found.
+//
+// OUTPUT PARAMETERS:
+//   .._result_events - result structure containing all found audit events of the action type.
+//
+// ALGORITHM:
+//   1. Create empty result set of events.
+//   2. Check that input argument is an instance of action type class.
+//   3. Find all audit events of the specified action type.
+//   4. For each event check if it belongs to audit event class.
+//   5. Add event to result set.
+//   6. Clear temporary sets and return result.
+//
+// USED KEY SC-ELEMENTS:
+//   - concept_action_type: class of action types
+//   - nrel_action_type: connects audit events with action types (non-role relation)
+//   - concept_audit_event: class of audit events
+//
+// ==========================================================================================
+
+program_for_searching_administrator_actions
+=> nrel_main_idtf:
+	[Программа поиска событий заданного типа действия]
+    (*
+        <- lang_ru;;
+    *);
+	[Program for searching events of specified action type]
+    (*
+        <- lang_en;;
+    *);
+<- scp_program;
+-> rrel_key_sc_element:
+    .._process;;
+
+program_for_searching_administrator_actions = [*
+.._process
+<-_ scp_process;
+
+// DECLARATION OF INPUT AND OUTPUT PARAMETERS:
+_-> rrel_1:: rrel_in:: .._action_type; // action type whose events need to be found.
+_-> rrel_2:: rrel_out:: .._result_events; // result structure of audit events of the action type.
+
+<=_ nrel_decomposition_of_action:: _...
+(*
+	// STEP 1: INITIALIZE RESULT STRUCTURE
+	// Create empty structure for adding events.
+	_-> rrel_1:: .._generate_result_set_of_events
+	(*
+		<-_ genElStr3;;
+
+		_-> rrel_1:: rrel_assign:: rrel_scp_var:: rrel_const:: rrel_node:: rrel_structure:: .._result_events;;
+		_-> rrel_2:: rrel_assign:: rrel_scp_var:: rrel_const_perm_pos_arc:: .._arc_from_result_events_to_class;;
+		_-> rrel_3:: rrel_fixed:: rrel_scp_const:: concept_audit_event;;
+
+        // Go to check input argument.
+		_=> nrel_goto:: .._check_action_type;;
+	*);;
+
+	// STEP 2: CHECK INPUT ARGUMENT
+	// Check that input argument is indeed an instance of action type class.
+	_-> .._check_action_type
+	(*
+		<-_ searchElStr3;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: concept_action_type;;
+		_-> rrel_2:: rrel_assign:: rrel_const_perm_pos_arc:: rrel_scp_var:: .._arc_from_class_to_action_type;;
+		_-> rrel_3:: rrel_fixed:: rrel_scp_const:: .._action_type;;
+
+		// If input argument is an instance of action type class, 
+		// then go to print to terminal that it is an action type.
+		_=> nrel_then:: .._print_that_specified_argument_is_action_type;;
+		// If input argument is not an instance of action type class, 
+		// then go to print to terminal that it is not an action type.
+		_=> nrel_else:: .._print_that_specified_argument_is_not_action_type;;
+	*);;
+
+	// Print to terminal that input argument is an action type.
+	_-> .._print_that_specified_argument_is_action_type
+	(*
+		<-_ printNl;;		
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: [Specified argument is action type];;
+
+		// Go to search all events of the action type.
+		_=> nrel_goto:: .._search_action_type_events;;
+	*);;
+
+	// STEP 3: SEARCH ALL EVENTS OF THE ACTION TYPE
+	// Find all audit events of the specified action type, form a set from them and write to .._found_events.
+	// Common relation form in SC-code:
+	//   event --(common_arc)--> action_type
+	//   nrel_action_type --(perm_pos_arc)--> common_arc
+	// Reverse search structure: event -> common_arc -> action_type <- perm_pos_arc <- nrel_action_type
+	_-> .._search_action_type_events
+	(*
+		<-_ searchSetStr5;;
+
+		_-> rrel_1:: rrel_assign:: rrel_scp_var:: rrel_const:: rrel_node:: .._event;;
+		_-> rrel_2:: rrel_assign:: rrel_scp_var:: rrel_common_arc:: .._arc_from_event_to_action_type;;
+		_-> rrel_3:: rrel_fixed:: rrel_scp_const:: .._action_type;;
+		_-> rrel_4:: rrel_assign:: rrel_scp_var:: rrel_const_perm_pos_arc:: .._arc_to_arc_from_event_to_action_type;;
+		_-> rrel_5:: rrel_fixed:: rrel_scp_const:: nrel_action_type;;
+	
+		_-> rrel_set_1:: rrel_assign:: rrel_scp_var:: .._found_events;;
+
+		// If events are found, then go to select event.
+		_=> nrel_then:: .._get_next_event;;
+		// If events are not found, then go to print to terminal that all events were iterated.
+		_=> nrel_else:: .._print_that_all_events_were_iterated;;
+	*);;
+
+	// STEP 4: SELECT EVENT FROM SET OF FOUND EVENTS
+	// Find any event in the set of found events, which is the value of variable .._found_events.
+	_-> .._get_next_event
+	(*
+		<-_ searchElStr3;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: .._found_events;;
+		_-> rrel_2:: rrel_assign:: rrel_scp_var:: rrel_const_perm_pos_arc:: .._arc_from_event_set_to_event;;
+		_-> rrel_3:: rrel_assign:: rrel_scp_var:: .._event;;
+
+		// If events still remain, then go to remove selected event from set.
+		_=> nrel_then:: .._pop_event_from_set;;
+		// If all events were iterated, then go to print to terminal that all events were iterated.
+		_=> nrel_else:: .._print_that_all_events_were_iterated;;
+	*);;
+
+	// STEP 5: REMOVE SELECTED EVENT FROM SET OF FOUND EVENTS
+	// Remove sc-arc between set in .._found_events and selected event.
+	_-> .._pop_event_from_set
+	(*
+		<-_ eraseEl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: rrel_erase:: .._arc_from_event_set_to_event;;
+
+		// Go to print to terminal that event was successfully extracted from set.
+		_=> nrel_goto:: .._print_that_action_type_event_was_found;;
+	*);;
+
+	// Print to terminal that event was successfully extracted from set.
+	_-> .._print_that_action_type_event_was_found
+	(*
+		<-_ printNl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: [Event was found for specified action type];;
+
+		// Go to check if event belongs to class concept_audit_event.
+		_=> nrel_goto:: .._check_event_class;;
+	*);;
+
+	// STEP 6: CHECK MEMBERSHIP TO EVENT CLASS AND ADD TO RESULT
+	// Check that event belongs to class concept_audit_event.
+	// If event belongs to class concept_audit_event, then it is automatically added to result set.
+	// If not - element is simply not added, and we go to next event.
+	_-> .._check_event_class
+	(*
+		<-_ searchSetStr3;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: concept_audit_event;;
+		_-> rrel_2:: rrel_assign:: rrel_scp_var:: rrel_const_perm_pos_arc:: .._arc_from_class_to_event;;
+		_-> rrel_3:: rrel_fixed:: rrel_scp_var:: .._event;;
+
+		_-> rrel_set_2:: rrel_fixed:: rrel_scp_var:: .._result_events;;
+
+		// Go to print (if event belongs to class, it is already added to result).
+		_=> nrel_goto:: .._print_that_event_was_added_to_result_events_set;;
+	*);;
+
+	// Print to terminal that event was successfully added to result.
+	_-> .._print_that_event_was_added_to_result_events_set
+	(*
+		<-_ printNl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: [Event was added to result events set];;
+
+		// Go to select next event.
+		_=> nrel_goto:: .._get_next_event;;
+	*);;
+
+	// Print to terminal that all events were processed.
+	_-> .._print_that_all_events_were_iterated
+	(*
+		<-_ printNl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: [All events were iterated for specified action type];;
+
+		// Go to check if events set variable was assigned.
+		_=> nrel_goto:: .._check_if_events_set_exists;;
+	*);;
+
+	// CHECK EXISTENCE OF EVENTS SET
+	// Check if events set variable was assigned before deletion.
+	_-> .._check_if_events_set_exists
+	(*
+		<-_ ifVarAssign;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: .._found_events;;
+
+		// If variable was assigned, then go to delete set.
+		_=> nrel_then:: .._erase_found_events_set;;
+		// If variable was not assigned, then go to delete arc to class.
+		_=> nrel_else:: .._erase_result_class_arc;;
+	*);;
+
+	// Delete temporary set of events.
+	_-> .._erase_found_events_set
+	(*
+		<-_ eraseEl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: rrel_erase:: .._found_events;;
+
+		// Go to delete arc to class.
+		_=> nrel_goto:: .._erase_result_class_arc;;
+	*);;
+
+	// Print to terminal that specified argument is not an action type.
+	_-> .._print_that_specified_argument_is_not_action_type
+	(*
+		<-_ printNl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_const:: [Specified argument is not action type];;
+
+		// Go to delete arc to class (if it was created).
+		_=> nrel_goto:: .._erase_result_class_arc;;
+	*);;
+
+	// Delete arc from result to class concept_audit_event before return.
+	// This is needed so that result contains only events, without connection to class.
+	_-> .._erase_result_class_arc
+	(*
+		<-_ ifVarAssign;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: .._arc_from_result_events_to_class;;
+
+		// If variable was assigned, then go to delete arc.
+		_=> nrel_then:: .._erase_result_class_arc_do;;
+		// If variable was not assigned, then go to finish program.
+		_=> nrel_else:: .._return_result;;
+	*);;
+
+	// Delete arc from result to class.
+	_-> .._erase_result_class_arc_do
+	(*
+		<-_ eraseEl;;
+
+		_-> rrel_1:: rrel_fixed:: rrel_scp_var:: rrel_erase:: .._arc_from_result_events_to_class;;
+
+		// Go to finish program.
+		_=> nrel_goto:: .._return_result;;
+	*);;
+
+	// Finish program.
+	_-> .._return_result
+	(*
+		<-_ return;;
+	*);;
+*);;
+*];;

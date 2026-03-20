@@ -1,0 +1,6 @@
+concept_audit_log
+<- sc_node_class;
+=> nrel_main_idtf:
+    [журнал аудита] (* <- lang_ru;; *);
+<= nrel_inclusion:
+    concept_log_file;;

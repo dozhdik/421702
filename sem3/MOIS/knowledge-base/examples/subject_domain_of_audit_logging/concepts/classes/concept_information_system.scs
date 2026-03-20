@@ -1,0 +1,6 @@
+concept_information_system
+<- sc_node_class;
+=> nrel_main_idtf:
+    [информационная система] (* <- lang_ru;; *);
+<= nrel_inclusion:
+    concept_software_system;;

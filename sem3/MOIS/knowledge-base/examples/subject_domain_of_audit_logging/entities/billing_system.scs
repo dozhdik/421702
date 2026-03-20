@@ -1,0 +1,22 @@
+billing_system_01
+    <- concept_information_system;
+    => nrel_main_idtf: 
+        [Биллинговая система банка] (* <- lang_ru;; *);
+    -> rrel_log: 
+        auth_log; 
+        transaction_log;;
+
+auth_log
+    <- concept_audit_log;
+    => nrel_main_idtf: 
+        [Журнал авторизаций] (* <- lang_ru;; *);
+    -> rrel_event:
+        event_login_001;
+        event_login_002;;
+
+transaction_log
+    <- concept_audit_log;
+    => nrel_main_idtf: 
+        [Журнал транзакций] (* <- lang_ru;; *);
+    -> rrel_event:
+        event_tx_551;;
