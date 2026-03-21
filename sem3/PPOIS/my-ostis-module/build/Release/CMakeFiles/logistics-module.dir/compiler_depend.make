@@ -1,2 +1,0 @@
-# Empty compiler generated dependencies file for logistics-module.
-# This may be replaced when dependencies are built.

@@ -1,5 +1,0 @@
-if(EXISTS "/home/alexander/421702/PPOIS/my-ostis-module/build/Release/logistics-module-tests[1]_tests.cmake")
-  include("/home/alexander/421702/PPOIS/my-ostis-module/build/Release/logistics-module-tests[1]_tests.cmake")
-else()
-  add_test(logistics-module-tests_NOT_BUILT logistics-module-tests_NOT_BUILT)
-endif()

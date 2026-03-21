@@ -1,1 +1,0 @@
-. "/home/alexander/421702/PPOIS/my-ostis-module/build/Release/generators/conanbuildenv-release-x86_64.sh"
