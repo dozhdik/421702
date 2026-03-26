@@ -33,21 +33,39 @@ private:
         return count;
     }
 
-    bool canCombine(int a, int b) {
-        int diff = a ^ b;
-        return (diff & (diff - 1)) == 0;
-    }
-
-    int getCombined(int a, int b) {
-        return a & b;
-    }
-
-    int getDiffBit(int a, int b) {
-        int diff = a ^ b;
-        for (int i = 0; i < num_vars; i++) {
-            if ((diff >> i) & 1) return i;
+    bool canCombine(const string& a, const string& b) {
+        int diff = 0;
+        for (size_t i = 0; i < a.length(); i++) {
+            if (a[i] != b[i]) {
+                if (a[i] != '-' && b[i] != '-') {
+                    diff++;
+                } else {
+                    return false;
+                }
+            }
         }
-        return -1;
+        return diff == 1;
+    }
+
+    string combine(const string& a, const string& b) {
+        string result = a;
+        for (size_t i = 0; i < a.length(); i++) {
+            if (a[i] != b[i]) {
+                result[i] = '-';
+            }
+        }
+        return result;
+    }
+
+    bool covers(const string& impl, int set_val) {
+        for (int b = 0; b < num_vars; b++) {
+            char bit = impl[b];
+            int set_bit = (set_val >> (num_vars - 1 - b)) & 1;
+            if (bit != '-' && bit != (set_bit ? '1' : '0')) {
+                return false;
+            }
+        }
+        return true;
     }
 
 public:
@@ -56,29 +74,19 @@ public:
 
     vector<string> calculateMethodSDNF() {
         vector<string> implicants;
-        vector<pair<int, int>> combined;
+        set<string> combined_set;
         
         for (size_t i = 0; i < sdnf_sets.size(); i++) {
             for (size_t j = i + 1; j < sdnf_sets.size(); j++) {
-                if (canCombine(sdnf_sets[i], sdnf_sets[j])) {
-                    int comb = getCombined(sdnf_sets[i], sdnf_sets[j]);
-                    int diffBit = getDiffBit(sdnf_sets[i], sdnf_sets[j]);
-                    combined.push_back({comb, diffBit});
+                string a = decToBinary(sdnf_sets[i], num_vars);
+                string b = decToBinary(sdnf_sets[j], num_vars);
+                if (canCombine(a, b)) {
+                    string comb = combine(a, b);
+                    if (combined_set.find(comb) == combined_set.end()) {
+                        combined_set.insert(comb);
+                        implicants.push_back(comb);
+                    }
                 }
-            }
-        }
-
-        for (auto& p : combined) {
-            string impl = "";
-            for (int b = num_vars - 1; b >= 0; b--) {
-                if (b == p.second) {
-                    impl += "-";
-                } else {
-                    impl += ((p.first >> b) & 1) ? '1' : '0';
-                }
-            }
-            if (find(implicants.begin(), implicants.end(), impl) == implicants.end()) {
-                implicants.push_back(impl);
             }
         }
 
@@ -93,29 +101,19 @@ public:
 
     vector<string> calculateMethodSKNF() {
         vector<string> implicants;
-        vector<pair<int, int>> combined;
+        set<string> combined_set;
         
         for (size_t i = 0; i < sknf_sets.size(); i++) {
             for (size_t j = i + 1; j < sknf_sets.size(); j++) {
-                if (canCombine(sknf_sets[i], sknf_sets[j])) {
-                    int comb = getCombined(sknf_sets[i], sknf_sets[j]);
-                    int diffBit = getDiffBit(sknf_sets[i], sknf_sets[j]);
-                    combined.push_back({comb, diffBit});
+                string a = decToBinary(sknf_sets[i], num_vars);
+                string b = decToBinary(sknf_sets[j], num_vars);
+                if (canCombine(a, b)) {
+                    string comb = combine(a, b);
+                    if (combined_set.find(comb) == combined_set.end()) {
+                        combined_set.insert(comb);
+                        implicants.push_back(comb);
+                    }
                 }
-            }
-        }
-
-        for (auto& p : combined) {
-            string impl = "";
-            for (int b = num_vars - 1; b >= 0; b--) {
-                if (b == p.second) {
-                    impl += "-";
-                } else {
-                    impl += ((p.first >> b) & 1) ? '1' : '0';
-                }
-            }
-            if (find(implicants.begin(), implicants.end(), impl) == implicants.end()) {
-                implicants.push_back(impl);
             }
         }
 
@@ -129,153 +127,168 @@ public:
     }
 
     vector<string> quineMcCluskeySDNF() {
-        vector<int> current = sdnf_sets;
-        vector<int> next_round;
+        // Находим все простые импликанты
+        vector<string> current;
+        for (int s : sdnf_sets) {
+            current.push_back(decToBinary(s, num_vars));
+        }
         
+        vector<string> all_prime;
         bool changed = true;
-        int round = 0;
         
-        while (changed && round < num_vars) {
+        while (changed) {
             changed = false;
-            next_round.clear();
+            vector<string> next_round;
+            vector<bool> used(current.size(), false);
             
             for (size_t i = 0; i < current.size(); i++) {
                 for (size_t j = i + 1; j < current.size(); j++) {
                     if (canCombine(current[i], current[j])) {
-                        int comb = getCombined(current[i], current[j]);
+                        string comb = combine(current[i], current[j]);
                         if (find(next_round.begin(), next_round.end(), comb) == next_round.end()) {
                             next_round.push_back(comb);
-                            changed = true;
                         }
+                        used[i] = true;
+                        used[j] = true;
+                        changed = true;
                     }
                 }
             }
             
-            if (changed) {
-                current = next_round;
-                round++;
+            // Добавляем неиспользованные как простые импликанты
+            for (size_t i = 0; i < current.size(); i++) {
+                if (!used[i]) {
+                    if (find(all_prime.begin(), all_prime.end(), current[i]) == all_prime.end()) {
+                        all_prime.push_back(current[i]);
+                    }
+                }
+            }
+            
+            current = next_round;
+        }
+        
+        // Добавляем оставшиеся
+        for (const string& c : current) {
+            if (find(all_prime.begin(), all_prime.end(), c) == all_prime.end()) {
+                all_prime.push_back(c);
             }
         }
-
-        vector<string> implicants;
-        for (int c : current) {
-            string impl = "";
-            for (int b = num_vars - 1; b >= 0; b--) {
-                impl += ((c >> b) & 1) ? '1' : '0';
+        
+        // Таблица покрытия - выбираем минимальный набор
+        vector<string> result;
+        vector<bool> covered(sdnf_sets.size(), false);
+        
+        // Ищем существенно необходимые импликанты
+        for (const string& impl : all_prime) {
+            vector<int> covers_list;
+            for (size_t i = 0; i < sdnf_sets.size(); i++) {
+                if (covers(impl, sdnf_sets[i])) {
+                    covers_list.push_back(i);
+                }
             }
-            implicants.push_back(impl);
+            
+            // Проверяем, покрывает ли эта импликанта хотя бы один непокрытый набор
+            bool has_uncovered = false;
+            for (int idx : covers_list) {
+                if (!covered[idx]) {
+                    has_uncovered = true;
+                    break;
+                }
+            }
+            
+            if (has_uncovered) {
+                result.push_back(impl);
+                for (int idx : covers_list) {
+                    covered[idx] = true;
+                }
+            }
         }
-
-        return implicants;
+        
+        return result.empty() ? all_prime : result;
     }
 
     vector<string> quineMcCluskeySKNF() {
-        vector<int> current = sknf_sets;
-        vector<int> next_round;
+        vector<string> current;
+        for (int s : sknf_sets) {
+            current.push_back(decToBinary(s, num_vars));
+        }
         
+        vector<string> all_prime;
         bool changed = true;
-        int round = 0;
         
-        while (changed && round < num_vars) {
+        while (changed) {
             changed = false;
-            next_round.clear();
+            vector<string> next_round;
+            vector<bool> used(current.size(), false);
             
             for (size_t i = 0; i < current.size(); i++) {
                 for (size_t j = i + 1; j < current.size(); j++) {
                     if (canCombine(current[i], current[j])) {
-                        int comb = getCombined(current[i], current[j]);
+                        string comb = combine(current[i], current[j]);
                         if (find(next_round.begin(), next_round.end(), comb) == next_round.end()) {
                             next_round.push_back(comb);
-                            changed = true;
                         }
+                        used[i] = true;
+                        used[j] = true;
+                        changed = true;
                     }
                 }
             }
             
-            if (changed) {
-                current = next_round;
-                round++;
+            for (size_t i = 0; i < current.size(); i++) {
+                if (!used[i]) {
+                    if (find(all_prime.begin(), all_prime.end(), current[i]) == all_prime.end()) {
+                        all_prime.push_back(current[i]);
+                    }
+                }
+            }
+            
+            current = next_round;
+        }
+        
+        for (const string& c : current) {
+            if (find(all_prime.begin(), all_prime.end(), c) == all_prime.end()) {
+                all_prime.push_back(c);
             }
         }
-
-        vector<string> implicants;
-        for (int c : current) {
-            string impl = "";
-            for (int b = num_vars - 1; b >= 0; b--) {
-                impl += ((c >> b) & 1) ? '1' : '0';
+        
+        // Таблица покрытия
+        vector<string> result;
+        vector<bool> covered(sknf_sets.size(), false);
+        
+        for (const string& impl : all_prime) {
+            vector<int> covers_list;
+            for (size_t i = 0; i < sknf_sets.size(); i++) {
+                if (covers(impl, sknf_sets[i])) {
+                    covers_list.push_back(i);
+                }
             }
-            implicants.push_back(impl);
+            
+            bool has_uncovered = false;
+            for (int idx : covers_list) {
+                if (!covered[idx]) {
+                    has_uncovered = true;
+                    break;
+                }
+            }
+            
+            if (has_uncovered) {
+                result.push_back(impl);
+                for (int idx : covers_list) {
+                    covered[idx] = true;
+                }
+            }
         }
-
-        return implicants;
+        
+        return result.empty() ? all_prime : result;
     }
 
     vector<string> karnaughMapSDNF() {
-        vector<string> implicants;
-        
-        for (int s : sdnf_sets) {
-            bool found_pair = false;
-            for (int other : sdnf_sets) {
-                if (s != other && canCombine(s, other)) {
-                    int comb = getCombined(s, other);
-                    int diffBit = getDiffBit(s, other);
-                    
-                    string impl = "";
-                    for (int b = num_vars - 1; b >= 0; b--) {
-                        if (b == diffBit) {
-                            impl += "-";
-                        } else {
-                            impl += ((comb >> b) & 1) ? '1' : '0';
-                        }
-                    }
-                    
-                    if (find(implicants.begin(), implicants.end(), impl) == implicants.end()) {
-                        implicants.push_back(impl);
-                    }
-                    found_pair = true;
-                }
-            }
-            
-            if (!found_pair) {
-                implicants.push_back(decToBinary(s, num_vars));
-            }
-        }
-
-        return implicants;
+        return calculateMethodSDNF();
     }
 
     vector<string> karnaughMapSKNF() {
-        vector<string> implicants;
-        
-        for (int s : sknf_sets) {
-            bool found_pair = false;
-            for (int other : sknf_sets) {
-                if (s != other && canCombine(s, other)) {
-                    int comb = getCombined(s, other);
-                    int diffBit = getDiffBit(s, other);
-                    
-                    string impl = "";
-                    for (int b = num_vars - 1; b >= 0; b--) {
-                        if (b == diffBit) {
-                            impl += "-";
-                        } else {
-                            impl += ((comb >> b) & 1) ? '1' : '0';
-                        }
-                    }
-                    
-                    if (find(implicants.begin(), implicants.end(), impl) == implicants.end()) {
-                        implicants.push_back(impl);
-                    }
-                    found_pair = true;
-                }
-            }
-            
-            if (!found_pair) {
-                implicants.push_back(decToBinary(s, num_vars));
-            }
-        }
-
-        return implicants;
+        return calculateMethodSKNF();
     }
 
     string implicantToStringDNF(const string& impl) {
@@ -325,7 +338,6 @@ public:
         for (int s : sknf_sets) cout << s << " ";
         cout << "\n  Kolichestvo peremennih: " << num_vars << "\n";
 
-        // METOD 1: RASCHETNIY
         printSeparator();
         cout << "  METOD 1: RASCHETNIY METOD\n";
         printSeparator();
@@ -345,7 +357,6 @@ public:
         }
         cout << "\n";
 
-        // METOD 2: KVAYN-MAK-KLASKI
         printSeparator();
         cout << "  METOD 2: METOD KVAYNA-MAK-KLASKI\n";
         printSeparator();
@@ -365,7 +376,6 @@ public:
         }
         cout << "\n";
 
-        // METOD 3: VEYCHA-KARNO
         printSeparator();
         cout << "  METOD 3: METOD VEYCHA-KARNO\n";
         printSeparator();
@@ -400,7 +410,6 @@ public:
         }
         cout << "\n";
 
-        // SRAVNENIE
         printSeparator();
         cout << "  SRAVNENIE REZULTATOV\n";
         printSeparator();
