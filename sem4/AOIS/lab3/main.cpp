@@ -72,10 +72,61 @@ public:
     Minimizer(vector<int> s, vector<int> k, int n) 
         : sdnf_sets(s), sknf_sets(k), num_vars(n) {}
 
-    vector<string> calculateMethodSDNF() {
+    // Удаляет лишние импликанты через таблицу покрытия (2-й этап минимизации)
+    vector<string> selectEssential(const vector<string>& implicants, const vector<int>& sets) {
+        vector<bool> covered(sets.size(), false);
+        vector<string> result;
+        vector<bool> used(implicants.size(), false);
+
+        // Шаг 1: существенные импликанты — единственные покрывающие хотя бы один набор
+        for (size_t si = 0; si < sets.size(); si++) {
+            int only = -1;
+            for (size_t ii = 0; ii < implicants.size(); ii++) {
+                if (covers(implicants[ii], sets[si])) {
+                    if (only == -1) only = (int)ii;
+                    else { only = -2; break; }
+                }
+            }
+            if (only >= 0 && !used[only]) {
+                used[only] = true;
+                result.push_back(implicants[only]);
+                for (size_t k = 0; k < sets.size(); k++)
+                    if (covers(implicants[only], sets[k])) covered[k] = true;
+            }
+        }
+
+        // Шаг 2: жадно добираем оставшиеся непокрытые наборы
+        bool progress = true;
+        while (progress) {
+            progress = false;
+            bool any_uncovered = false;
+            for (bool c : covered) if (!c) { any_uncovered = true; break; }
+            if (!any_uncovered) break;
+
+            int best_ii = -1, best_count = 0;
+            for (size_t ii = 0; ii < implicants.size(); ii++) {
+                if (used[ii]) continue;
+                int cnt = 0;
+                for (size_t k = 0; k < sets.size(); k++)
+                    if (!covered[k] && covers(implicants[ii], sets[k])) cnt++;
+                if (cnt > best_count) { best_count = cnt; best_ii = (int)ii; }
+            }
+            if (best_ii >= 0) {
+                used[best_ii] = true;
+                result.push_back(implicants[best_ii]);
+                for (size_t k = 0; k < sets.size(); k++)
+                    if (covers(implicants[best_ii], sets[k])) covered[k] = true;
+                progress = true;
+            }
+        }
+
+        return result.empty() ? implicants : result;
+    }
+
+    // Первый этап: склейка (переход к сокращённой форме)
+    vector<string> reducedSDNF() {
         vector<string> implicants;
         set<string> combined_set;
-        
         for (size_t i = 0; i < sdnf_sets.size(); i++) {
             for (size_t j = i + 1; j < sdnf_sets.size(); j++) {
                 string a = decToBinary(sdnf_sets[i], num_vars);
@@ -89,20 +140,14 @@ public:
                 }
             }
         }
-
-        if (implicants.empty()) {
-            for (int s : sdnf_sets) {
-                implicants.push_back(decToBinary(s, num_vars));
-            }
-        }
-
+        if (implicants.empty())
+            for (int s : sdnf_sets) implicants.push_back(decToBinary(s, num_vars));
         return implicants;
     }
 
-    vector<string> calculateMethodSKNF() {
+    vector<string> reducedSKNF() {
         vector<string> implicants;
         set<string> combined_set;
-        
         for (size_t i = 0; i < sknf_sets.size(); i++) {
             for (size_t j = i + 1; j < sknf_sets.size(); j++) {
                 string a = decToBinary(sknf_sets[i], num_vars);
@@ -116,14 +161,17 @@ public:
                 }
             }
         }
-
-        if (implicants.empty()) {
-            for (int s : sknf_sets) {
-                implicants.push_back(decToBinary(s, num_vars));
-            }
-        }
-
+        if (implicants.empty())
+            for (int s : sknf_sets) implicants.push_back(decToBinary(s, num_vars));
         return implicants;
+    }
+
+    vector<string> calculateMethodSDNF() {
+        return selectEssential(reducedSDNF(), sdnf_sets);
+    }
+
+    vector<string> calculateMethodSKNF() {
+        return selectEssential(reducedSKNF(), sknf_sets);
     }
 
     vector<string> quineMcCluskeySDNF() {
@@ -174,37 +222,8 @@ public:
             }
         }
         
-        // Таблица покрытия - выбираем минимальный набор
-        vector<string> result;
-        vector<bool> covered(sdnf_sets.size(), false);
-        
-        // Ищем существенно необходимые импликанты
-        for (const string& impl : all_prime) {
-            vector<int> covers_list;
-            for (size_t i = 0; i < sdnf_sets.size(); i++) {
-                if (covers(impl, sdnf_sets[i])) {
-                    covers_list.push_back(i);
-                }
-            }
-            
-            // Проверяем, покрывает ли эта импликанта хотя бы один непокрытый набор
-            bool has_uncovered = false;
-            for (int idx : covers_list) {
-                if (!covered[idx]) {
-                    has_uncovered = true;
-                    break;
-                }
-            }
-            
-            if (has_uncovered) {
-                result.push_back(impl);
-                for (int idx : covers_list) {
-                    covered[idx] = true;
-                }
-            }
-        }
-        
-        return result.empty() ? all_prime : result;
+        // Таблица покрытия — выбираем минимальный набор через selectEssential
+        return selectEssential(all_prime, sdnf_sets);
     }
 
     vector<string> quineMcCluskeySKNF() {
@@ -252,35 +271,8 @@ public:
             }
         }
         
-        // Таблица покрытия
-        vector<string> result;
-        vector<bool> covered(sknf_sets.size(), false);
-        
-        for (const string& impl : all_prime) {
-            vector<int> covers_list;
-            for (size_t i = 0; i < sknf_sets.size(); i++) {
-                if (covers(impl, sknf_sets[i])) {
-                    covers_list.push_back(i);
-                }
-            }
-            
-            bool has_uncovered = false;
-            for (int idx : covers_list) {
-                if (!covered[idx]) {
-                    has_uncovered = true;
-                    break;
-                }
-            }
-            
-            if (has_uncovered) {
-                result.push_back(impl);
-                for (int idx : covers_list) {
-                    covered[idx] = true;
-                }
-            }
-        }
-        
-        return result.empty() ? all_prime : result;
+        // Таблица покрытия — выбираем минимальный набор через selectEssential
+        return selectEssential(all_prime, sknf_sets);
     }
 
     vector<string> karnaughMapSDNF() {
@@ -308,16 +300,89 @@ public:
     string implicantToStringKNF(const string& impl) {
         string result = "";
         for (int i = 0; i < num_vars; i++) {
+            if (impl[i] == '-') continue;
             if (!result.empty()) result += " + ";
             if (impl[i] == '1') {
                 result += "!x" + to_string(i + 1);
             } else if (impl[i] == '0') {
                 result += "x" + to_string(i + 1);
-            } else {
-                continue;
             }
         }
         return result.empty() ? "0" : "(" + result + ")";
+    }
+
+    // Вычисляет значение ДНФ на наборе set_val
+    int evalDNF(const vector<string>& implicants, int set_val) {
+        for (const string& impl : implicants) {
+            bool match = true;
+            for (int b = 0; b < num_vars; b++) {
+                int bit = (set_val >> (num_vars - 1 - b)) & 1;
+                if (impl[b] == '1' && bit != 1) { match = false; break; }
+                if (impl[b] == '0' && bit != 0) { match = false; break; }
+            }
+            if (match) return 1;
+        }
+        return 0;
+    }
+
+    // Вычисляет значение КНФ на наборе set_val
+    int evalKNF(const vector<string>& implicants, int set_val) {
+        for (const string& impl : implicants) {
+            // Клоз = 0, если все нон-дефисные биты набора совпадают с импликантой
+            bool clause_is_zero = true;
+            for (int b = 0; b < num_vars; b++) {
+                if (impl[b] == '-') continue; // переменная исключена — пропускаем
+                int bit = (set_val >> (num_vars - 1 - b)) & 1;
+                if (impl[b] == '0' && bit != 0) { clause_is_zero = false; break; }
+                if (impl[b] == '1' && bit != 1) { clause_is_zero = false; break; }
+            }
+            if (clause_is_zero) return 0;
+        }
+        return 1;
+    }
+
+    void printTruthTable(const vector<string>& dnf_impl, const vector<string>& knf_impl,
+                         const string& method_name) {
+        int total = 1 << num_vars;
+
+        // Заголовок
+        cout << "\n  Tablitsa istinnosti (" << method_name << "):\n";
+        cout << "  +";
+        for (int v = 0; v < num_vars; v++) cout << "----+";
+        cout << "--------+--------+--------+\n";
+
+        cout << "  |";
+        for (int v = 1; v <= num_vars; v++) cout << " x" << v << " |";
+        cout << " f(isx) | f(DNF) | f(KNF) |\n";
+
+        cout << "  +";
+        for (int v = 0; v < num_vars; v++) cout << "----+";
+        cout << "--------+--------+--------+\n";
+
+        bool all_match = true;
+        for (int s = 0; s < total; s++) {
+            // Исходное значение из СДНФ (f=1 для наборов из sdnf_sets)
+            int f_orig = (find(sdnf_sets.begin(), sdnf_sets.end(), s) != sdnf_sets.end()) ? 1 : 0;
+            int f_dnf  = evalDNF(dnf_impl, s);
+            int f_knf  = evalKNF(knf_impl, s);
+
+            bool match = (f_orig == f_dnf) && (f_orig == f_knf);
+            if (!match) all_match = false;
+
+            cout << "  |";
+            for (int b = num_vars - 1; b >= 0; b--) {
+                cout << "  " << ((s >> b) & 1) << " |";
+            }
+            cout << "   " << f_orig << "    |   " << f_dnf << "    |   " << f_knf << "    |";
+            if (!match) cout << " !!!";
+            cout << "\n";
+        }
+
+        cout << "  +";
+        for (int v = 0; v < num_vars; v++) cout << "----+";
+        cout << "--------+--------+--------+\n";
+
+        cout << "  Proverka: " << (all_match ? "OK - vse znacheniya sovpadayut" : "OSHIBKA - est rashozhdeniya") << "\n";
     }
 
     void printSeparator() {
@@ -356,6 +421,7 @@ public:
             if (i < calc_sknf.size() - 1) cout << " * ";
         }
         cout << "\n";
+        printTruthTable(calc_sdnf, calc_sknf, "Raschetniy metod");
 
         printSeparator();
         cout << "  METOD 2: METOD KVAYNA-MAK-KLASKI\n";
@@ -375,6 +441,7 @@ public:
             if (i < qm_sknf.size() - 1) cout << " * ";
         }
         cout << "\n";
+        printTruthTable(qm_sdnf, qm_sknf, "Kvayn-Mak-Klaski");
 
         printSeparator();
         cout << "  METOD 3: METOD VEYCHA-KARNO\n";
@@ -409,6 +476,7 @@ public:
             if (i < km_sknf.size() - 1) cout << " * ";
         }
         cout << "\n";
+        printTruthTable(km_sdnf, km_sknf, "Veycha-Karno");
 
         printSeparator();
         cout << "  SRAVNENIE REZULTATOV\n";
