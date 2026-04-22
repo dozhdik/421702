@@ -21,8 +21,6 @@ from aircraft_model import (
     CrewRole,
     FlightRoute,
     Passenger,
-    Runway,
-    RunwayStatus,
     Ticket,
     TicketStatus,
 )
@@ -97,98 +95,40 @@ def sample_ticket():
 
 
 @pytest.fixture
-def sample_runway():
-    """Фикстура для тестовой ВПП."""
-    return Runway("RWY-TEST", 3000)
-
-
-@pytest.fixture
 def sample_route():
     """Фикстура для тестового маршрута."""
     return FlightRoute("TST", "DST", 1000)
 
 
 @pytest.fixture
-def aircraft_on_ground(sample_aircraft):
-    """Самолёт на земле с экипажем и пассажиром."""
-    # Добавляем пилотов (2 требуется для полёта)
-    pilot1 = CrewMember("Пилот", CrewRole.PILOT, "PLT-ONGR001")
-    pilot1.start_duty()
-    pilot2 = CrewMember("Второй пилот", CrewRole.CO_PILOT, "PLT-ONGR002")
-    pilot2.start_duty()
-    sample_aircraft.add_crew_member(pilot1)
-    sample_aircraft.add_crew_member(pilot2)
-
-    # Добавляем 2 бортпроводников (минимум 2)
-    att1 = CrewMember("Бортпроводник 1", CrewRole.FLIGHT_ATTENDANT, "FA-ONGR001")
-    att1.start_duty()
-    att2 = CrewMember("Бортпроводник 2", CrewRole.FLIGHT_ATTENDANT, "FA-ONGR002")
-    att2.start_duty()
-    sample_aircraft.add_crew_member(att1)
-    sample_aircraft.add_crew_member(att2)
-
+def in_flight_aircraft(sample_aircraft, crew_on_duty, registered_passenger):
+    """Самолёт в полёте с экипажем и пассажиром."""
+    # Добавляем экипаж (минимум 2 человека)
+    attendee = CrewMember("Attendant", CrewRole.FLIGHT_ATTENDANT, "FA-TEST001")
+    attendee.start_duty()
+    sample_aircraft.add_crew_member(crew_on_duty)
+    sample_aircraft.add_crew_member(attendee)
     # Добавляем пассажира
-    reg_p = Passenger("Пассажир", "ONGR12345678", "TKT-ONGR", "1A")
-    reg_p.register_for_flight()
-    sample_aircraft.add_passenger(reg_p)
-
+    sample_aircraft.add_passenger(registered_passenger)
     # Устанавливаем маршрут
     route = FlightRoute("SVO", "LED", 650)
     sample_aircraft.set_route(route)
-
-    return sample_aircraft
-
-
-@pytest.fixture
-def in_flight_aircraft(sample_aircraft):
-    """Самолёт в полёте с экипажем и пассажиром."""
-    # Добавляем экипаж
-    pilot1 = CrewMember("Пилот", CrewRole.PILOT, "PLT-IF001")
-    pilot1.start_duty()
-    pilot2 = CrewMember("Второй пилот", CrewRole.CO_PILOT, "PLT-IF002")
-    pilot2.start_duty()
-    sample_aircraft.add_crew_member(pilot1)
-    sample_aircraft.add_crew_member(pilot2)
-
-    att1 = CrewMember("Бортпроводник 1", CrewRole.FLIGHT_ATTENDANT, "FA-IF001")
-    att1.start_duty()
-    att2 = CrewMember("Бортпроводник 2", CrewRole.FLIGHT_ATTENDANT, "FA-IF002")
-    att2.start_duty()
-    sample_aircraft.add_crew_member(att1)
-    sample_aircraft.add_crew_member(att2)
-
-    # Добавляем пассажира
-    reg_p = Passenger("Пассажир", "IF12345678", "TKT-IF", "1A")
-    reg_p.register_for_flight()
-    sample_aircraft.add_passenger(reg_p)
-
-    # У��танавливаем маршрут
-    route = FlightRoute("SVO", "LED", 650)
-    sample_aircraft.set_route(route)
-
     # Меняем статус на IN_FLIGHT
     sample_aircraft.change_status(AircraftStatus.IN_FLIGHT)
     return sample_aircraft
 
 
-# ============================================================================
-# ФИКСТУРЫ ДЛЯ МОКОВ
-# ============================================================================
-
 @pytest.fixture
-def mock_input():
-    """Мок для input()."""
-    from unittest.mock import patch
-    return patch('builtins.input')
-
-
-@pytest.fixture
-def mock_safe_input(mock_input):
-    """Мок для safe_input."""
-    def _mock(value):
-        mock_input.return_value = value
-        return mock_input
-    return _mock
+def aircraft_on_ground(sample_aircraft, crew_on_duty, registered_passenger):
+    """Самолёт на земле с экипажем и пассажиром."""
+    attendee = CrewMember("Attendant", CrewRole.FLIGHT_ATTENDANT, "FA-TEST001")
+    attendee.start_duty()
+    sample_aircraft.add_crew_member(crew_on_duty)
+    sample_aircraft.add_crew_member(attendee)
+    sample_aircraft.add_passenger(registered_passenger)
+    route = FlightRoute("SVO", "LED", 650)
+    sample_aircraft.set_route(route)
+    return sample_aircraft
 
 
 # ============================================================================
@@ -198,7 +138,14 @@ def mock_safe_input(mock_input):
 @pytest.fixture(autouse=True)
 def reset_system_state():
     """Очищает SystemState перед каждым тестом."""
-    from main import SystemState
-    SystemState._instance = None
+    try:
+        from main import SystemState
+        SystemState._instance = None
+    except ImportError:
+        pass
     yield
-    SystemState._instance = None
+    try:
+        from main import SystemState
+        SystemState._instance = None
+    except ImportError:
+        pass

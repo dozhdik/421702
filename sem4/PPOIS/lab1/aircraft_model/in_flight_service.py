@@ -21,13 +21,13 @@ class InFlightService:
 
     # Начальные значения инвентаря
     DEFAULT_INVENTORY: Dict[ServiceType, int] = {
-        ServiceType.MEAL: 100,
-        ServiceType.BEVERAGE: 200,
-        ServiceType.ENTERTAINMENT: 50,
-        ServiceType.ASSISTANCE: 100,
-        ServiceType.DUTY_FREE: 50,
-        ServiceType.WIFI: 150,
-        ServiceType.SPECIAL_ASSISTANCE: 20,
+        ServiceType.MEAL: 2,
+        ServiceType.BEVERAGE: 4,
+        ServiceType.ENTERTAINMENT: 6,
+        ServiceType.ASSISTANCE: 10,
+        ServiceType.DUTY_FREE: 1,
+        ServiceType.WIFI: 1,
+        ServiceType.SPECIAL_ASSISTANCE: 2,
     }
 
     def __init__(self) -> None:

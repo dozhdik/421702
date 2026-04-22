@@ -28,10 +28,7 @@ from aircraft_model import (
     FlightRoute,
     InFlightService,
     Passenger,
-    Runway,
-    RunwayStatus,
-    Ticket,
-    TicketStatus,
+    # Runway удалён
     # Исключения
     CapacityError,
     CrewError,
@@ -44,6 +41,80 @@ from aircraft_model import (
     ValidationError,
 )
 from aircraft_model.enums import ServiceType
+
+
+# ============================================================================
+# ФИКСИРОВАННЫЙ СПИСОК АЭРОПОРТОВ (Требование 4)
+# ============================================================================
+class Airport:
+    """Фиксированный аэропорт."""
+    SVO = "SVO"   # Шереметьево
+    LED = "LED"   # Пулково
+    DME = "DME"   # Домодедово
+    VKO = "VKO"   # Внуково
+    KZN = "KZN"   # Казань
+    AER = "AER"   # Сочи
+
+    @classmethod
+    def all(cls) -> list[str]:
+        """Все аэропорты."""
+        return [cls.SVO, cls.LED, cls.DME, cls.VKO, cls.KZN, cls.AER]
+
+    @classmethod
+    def display_all(cls) -> str:
+        """Строка для отображения."""
+        return ", ".join(cls.all())
+
+    AIRPORT_NAMES = {
+        SVO: "Шереметьево (Москва)",
+        LED: "Пулково (Санкт-Петербург)",
+        DME: "Домодедово (Москва)",
+        VKO: "Внуково (Москва)",
+        KZN: "Казань",
+        AER: "Сочи",
+    }
+
+    @classmethod
+    def get_name(cls, code: str) -> str:
+        """Получить название по коду."""
+        return cls.AIRPORT_NAMES.get(code, code)
+
+
+# ============================================================================
+# РАССТОЯНИЯ МЕЖДУ АЭРОПОРТАМИ (для автоматического расчёта)
+# ============================================================================
+AIRPORT_DISTANCES: dict[tuple[str, str], float] = {
+    # Москва - Санкт-Петербург
+    (Airport.SVO, Airport.LED): 634.0,
+    (Airport.DME, Airport.LED): 634.0,
+    (Airport.VKO, Airport.LED): 634.0,
+    # Москва - Казань
+    (Airport.SVO, Airport.KZN): 720.0,
+    (Airport.DME, Airport.KZN): 720.0,
+    (Airport.VKO, Airport.KZN): 720.0,
+    # Москва - Сочи
+    (Airport.SVO, Airport.AER): 1362.0,
+    (Airport.DME, Airport.AER): 1362.0,
+    (Airport.VKO, Airport.AER): 1362.0,
+    # СПб - Казань
+    (Airport.LED, Airport.KZN): 1107.0,
+    # СПб - Сочи
+    (Airport.LED, Airport.AER): 1740.0,
+    # Казань - Сочи
+    (Airport.KZN, Airport.AER): 1200.0,
+}
+
+
+def get_distance(from_code: str, to_code: str) -> float:
+    """Получить расстояние между аэропортами."""
+    # Пробуем прямое направление
+    if (from_code, to_code) in AIRPORT_DISTANCES:
+        return AIRPORT_DISTANCES[(from_code, to_code)]
+    # Пробуем обратное
+    if (to_code, from_code) in AIRPORT_DISTANCES:
+        return AIRPORT_DISTANCES[(to_code, from_code)]
+    # По умолчанию
+    return 800.0
 
 
 # ============================================================================
@@ -75,6 +146,77 @@ def step(step_num: int, description: str) -> None:
 
 
 # ============================================================================
+# КЛАСС РЕЙСА (Flight)
+# ============================================================================
+class Flight:
+    """Рейс, привязанный к конкретному самолёту."""
+
+    def __init__(
+        self,
+        flight_number: str,
+        aircraft: Aircraft,
+        departure: str,
+        destination: str,
+        departure_time: datetime,
+        distance_km: float = 0.0,
+    ) -> None:
+        self.flight_number = flight_number.upper()
+        self.aircraft = aircraft
+        self.departure = departure.upper()
+        self.destination = destination.upper()
+        self.departure_time = departure_time
+        self.arrival_time: Optional[datetime] = None
+        self.passengers: list[Passenger] = []
+        self._seats_taken: set[str] = set()
+        # Данные маршрута
+        self.distance_km = distance_km
+        self.fuel_needed: float = 0.0
+        self.duration_hours: float = 0.0
+        self._calculate_route()
+
+    def _calculate_route(self) -> None:
+        """Автоматический расчёт маршрута (Требование 7)."""
+        self.distance_km = get_distance(self.departure, self.destination)
+        # Топливо: ~3.5 л/км + 10% резерв
+        self.fuel_needed = self.distance_km * 3.5 * 1.1
+        # Время: ~800 км/ч
+        self.duration_hours = self.distance_km / 800.0
+
+    def add_passenger(self, passenger: Passenger) -> None:
+        """Добавить пассажира на рейс."""
+        self.passengers.append(passenger)
+        self._seats_taken.add(passenger.seat_number.upper())
+
+    def is_seat_taken(self, seat: str) -> bool:
+        """Проверить, занято ли место."""
+        return seat.upper() in self._seats_taken
+
+    def is_passenger_on_flight(self, passport: str) -> bool:
+        """Проверить, есть ли пассажир на рейсе."""
+        passport = passport.upper()
+        return any(p.passport_number.upper() == passport for p in self.passengers)
+
+    def get_passenger_count(self) -> int:
+        return len(self.passengers)
+
+    def __repr__(self) -> str:
+        return (
+            f"Flight({self.flight_number}: {self.departure}->{self.destination}, "
+            f"aircraft={self.aircraft.tail_number}, passengers={self.get_passenger_count()})"
+        )
+
+    def __str__(self) -> str:
+        time_str = self.departure_time.strftime("%Y-%m-%d %H:%M")
+        hours = int(self.duration_hours)
+        minutes = int((self.duration_hours % 1) * 60)
+        return (
+            f"Рейс: {self.flight_number} | {self.departure} -> {self.destination} | "
+            f"Вылет: {time_str} | Борт: {self.aircraft.tail_number} | "
+            f"{self.distance_km:.0f}км | ~{hours}h {minutes}m"
+        )
+
+
+# ============================================================================
 # КЛАСС УПРАВЛЕНИЯ СОСТОЯНИЕМ СИСТЕМЫ
 # ============================================================================
 class SystemState:
@@ -93,17 +235,34 @@ class SystemState:
 
     def _init(self) -> None:
         self.aircraft: dict[str, Aircraft] = {}
-        self.runways: dict[str, Runway] = {}
         self.passengers: dict[str, Passenger] = {}
-        self.tickets: dict[str, Ticket] = {}
+        self.tickets: dict[str, Passenger] = {}
         self.crew_members: dict[str, CrewMember] = {}
-        self.routes: dict[str, FlightRoute] = {}
+        self.flights: dict[str, Flight] = {}
         self.in_flight_services: dict[str, InFlightService] = {}
 
     def reset(self) -> None:
         self._init()
         info("Состояние системы сброшено")
 
+    # =========================================================================
+    # ВАЛИДАЦИЯ УНИКАЛЬНОСТИ
+    # =========================================================================
+    def is_tail_number_exists(self, tail_number: str) -> bool:
+        return tail_number.upper() in self.aircraft
+
+    def is_flight_number_exists(self, flight_number: str) -> bool:
+        return flight_number.upper() in self.flights
+
+    def is_passport_exists(self, passport: str) -> bool:
+        return passport.upper() in self.passengers
+
+    def is_license_exists(self, license_num: str) -> bool:
+        return license_num.upper() in self.crew_members
+
+    # =========================================================================
+    # ГЕТТЕРЫ
+    # =========================================================================
     def get_aircraft(self, identifier: str = None) -> Optional[Aircraft]:
         if not identifier:
             return None
@@ -115,22 +274,26 @@ class SystemState:
                 return aircraft
         return None
 
-    def get_runway(self, runway_id: str = None) -> Optional[Runway]:
-        if not runway_id:
+    def get_flight(self, flight_number: str = None) -> Optional[Flight]:
+        if not flight_number:
             return None
-        runway_id = runway_id.upper()
-        if runway_id in self.runways:
-            return self.runways[runway_id]
+        return self.flights.get(flight_number.upper())
+
+    def get_flight_by_aircraft(self, aircraft: Aircraft) -> Optional[Flight]:
+        """Найти рейс по самолёту (Требование 6)."""
+        for flight in self.flights.values():
+            if flight.aircraft.tail_number == aircraft.tail_number:
+                return flight
         return None
 
     def get_passenger(self, passport: str = None) -> Optional[Passenger]:
         if not passport:
             return None
-        passport = passport.upper()
-        if passport in self.passengers:
-            return self.passengers[passport]
-        return None
+        return self.passengers.get(passport.upper())
 
+    # =========================================================================
+    # СВОДКА (Требование 2 - привязка к самолёту)
+    # =========================================================================
     def summary(self) -> None:
         header("СОСТОЯНИЕ СИСТЕМЫ")
 
@@ -141,33 +304,43 @@ class SystemState:
         else:
             print("\nСамолёты: нет")
 
-        if self.runways:
-            print("\nВПП:")
-            for rid, runway in self.runways.items():
-                print(f"  [{rid}] {runway}")
+        if self.flights:
+            print("\nРейсы:")
+            for fid, flight in self.flights.items():
+                print(f"  [{fid}] {flight}")
         else:
-            print("\nВПП: нет")
+            print("\nРейсы: нет")
 
         if self.passengers:
             print("\nПассажиры:")
             for pid, passenger in self.passengers.items():
-                print(f"  [{pid}] {passenger}")
+                # Требование 2: добавляем привязку к самолёту
+                aircraft_code = ""
+                for flight in self.flights.values():
+                    if flight.is_passenger_on_flight(pid):
+                        aircraft_code = flight.aircraft.tail_number
+                        break
+                print(f"  [{pid}] Passenger: {passenger.full_name} | Passport: {pid} | "
+                      f"Aircraft: {aircraft_code} | Seat: {passenger.seat_number or '-'} | "
+                      f"Status: {'registered' if passenger.is_registered else 'not registered'}")
         else:
             print("\nПассажиры: нет")
 
         if self.crew_members:
             print("\nЭкипаж:")
             for cid, crew in self.crew_members.items():
-                print(f"  [{cid}] {crew}")
+                # Требование 2: добавляем привязку к самолёту
+                aircraft_code = ""
+                for aircraft in self.aircraft.values():
+                    for cm in aircraft.crew:
+                        if cm.license_number == cid:
+                            aircraft_code = aircraft.tail_number
+                            break
+                duty_status = "on duty" if crew.is_on_duty else "off duty"
+                print(f"  [{cid}] Crew: {crew.full_name} | Role: {crew.role.name} | "
+                      f"License: {cid} | Aircraft: {aircraft_code} | {duty_status}")
         else:
             print("\nЭкипаж: нет")
-
-        if self.routes:
-            print("\nМаршруты:")
-            for rid, route in self.routes.items():
-                print(f"  [{rid}] {route}")
-        else:
-            print("\nМаршруты: нет")
 
 
 # Глобальный экземпляр состояния
@@ -175,10 +348,9 @@ state = SystemState()
 
 
 # ============================================================================
-# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ВВОДА
+# ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ВВОДА С ВАЛИДАЦИЕЙ
 # ============================================================================
 def safe_input(prompt: str) -> Optional[str]:
-    """Безопасный ввод с обработкой Ctrl+C."""
     try:
         return input(prompt).strip()
     except KeyboardInterrupt:
@@ -186,8 +358,7 @@ def safe_input(prompt: str) -> Optional[str]:
         return None
 
 
-def get_choice(menu_items: int = 8) -> Optional[int]:
-    """Получить выбор пункта меню."""
+def get_choice(menu_items: int = 10) -> Optional[int]:
     try:
         choice = input("> ").strip()
         if choice == "":
@@ -199,52 +370,132 @@ def get_choice(menu_items: int = 8) -> Optional[int]:
         return None
 
 
+def input_while_empty(prompt: str) -> Optional[str]:
+    while True:
+        value = safe_input(prompt)
+        if value is None:
+            return None
+        if value.strip():
+            return value.strip()
+        warning("Поле не может быть пустым.")
+
+
+def input_while_not_number(prompt: str, is_float: bool = False) -> Optional[float]:
+    while True:
+        value = safe_input(prompt)
+        if value is None:
+            return None
+        try:
+            if is_float:
+                return float(value)
+            else:
+                return int(value)
+        except ValueError:
+            warning("Введите число.")
+
+
+def input_until_valid_seat(
+    prompt: str,
+    existing_seats: set[str],
+    capacity: int
+) -> Optional[str]:
+    while True:
+        value = safe_input(prompt)
+        if value is None:
+            return None
+        value = value.strip().upper()
+        if not value:
+            warning("Место не может быть пустым.")
+            continue
+        if len(value) < 2 or len(value) > 3:
+            warning("Неверный формат места. Пример: 12A")
+            continue
+        if not value[-1].isalpha():
+            warning("Место должно заканчиваться буквой.")
+            continue
+        row_part = value[:-1]
+        if not row_part.isdigit():
+            warning("Ряд должен быть числом.")
+            continue
+        if value in existing_seats:
+            warning(f"Место {value} уже занято.")
+            continue
+        return value
+
+
+def input_airport(prompt: str) -> Optional[str]:
+    """Выбор аэропорта из списка (Требование 5)."""
+    while True:
+        print(f"\n{prompt}")
+        print("Доступные аэропорты:")
+        for i, code in enumerate(Airport.all(), 1):
+            print(f"  {i} - {code} ({Airport.get_name(code)})")
+
+        choice = safe_input("Выберите номер: ")
+        if choice is None:
+            return None
+        try:
+            idx = int(choice) - 1
+            if 0 <= idx < len(Airport.all()):
+                return Airport.all()[idx]
+            warning("Неверный номер.")
+        except ValueError:
+            warning("Введите номер.")
+
+
 # ============================================================================
 # ПУНКТЫ МЕНЮ
 # ============================================================================
 
 def menu_create_aircraft() -> None:
-    """Пункт 1: Создать самолёт."""
+    """Пункт 1: Создать самолёт (с авто-экипажем)."""
     header("СОЗДАТЬ САМОЛЁТ")
 
     try:
-        model = safe_input("Модель (например, Boeing 737-800): ")
+        step(1, "Ввод данных самолёта")
+        model = input_while_empty("Модель (например, Boeing 737-800): ")
         if model is None:
             return
 
-        tail = safe_input("Бортовой номер (например, RA-12345): ")
-        if tail is None:
+        while True:
+            tail = safe_input("Бортовой номер (например, RA-12345): ")
+            if tail is None:
+                return
+            tail = tail.strip().upper()
+            if not tail:
+                warning("Бортовой номер не может быть пустым.")
+                continue
+            if state.is_tail_number_exists(tail):
+                warning(f"Самолёт с бортовым номером {tail} уже существует!")
+                continue
+            break
+
+        capacity = input_while_not_number("Вместимость (пассажиров): ")
+        if capacity is None:
+            return
+        if capacity <= 0:
+            error("Вместимость должна быть положительным числом")
             return
 
-        cap_str = safe_input("Вместимость (пассажиров): ")
-        if cap_str is None:
-            return
-        capacity = int(cap_str)
-
-        aircraft = Aircraft(model=model, tail_number=tail, capacity=capacity)
+        step(2, "Создание самолёта")
+        aircraft = Aircraft(model=model, tail_number=tail, capacity=int(capacity))
+        state.aircraft[tail] = aircraft
+        state.in_flight_services[tail] = aircraft.get_service()
         success(f"Самолёт создан: {aircraft.model} ({aircraft.tail_number})")
 
-        state.aircraft[tail.upper()] = aircraft
-        state.in_flight_services[tail.upper()] = aircraft.get_service()
-        success(f"Сохранён как [{tail.upper()}]")
+        step(3, "Автоматическое создание экипажа")
+        _create_minimum_crew(aircraft)
 
-        add_crew = safe_input("Добавить минимальный экипаж? (y/n): ")
-        if add_crew and add_crew.lower() == 'y':
-            _add_minimum_crew(aircraft)
-
-        print(f"\nСамолёт готов!")
-        print(aircraft)
+        print(f"\n{aircraft}")
 
     except ValidationError as e:
         error(f"Ошибка валидации: {e.message}")
-    except ValueError:
-        error("Некорректное число для вместимости")
     except KeyboardInterrupt:
         pass
 
 
-def _add_minimum_crew(aircraft: Aircraft) -> None:
-    """Добавить минимальный экипаж."""
+def _create_minimum_crew(aircraft: Aircraft) -> None:
+    """Создать минимальный экипаж из 4 человек."""
     crew_data = [
         ("Первый пилот", CrewRole.PILOT, f"PLT-{uuid.uuid4().hex[:6].upper()}"),
         ("Второй пилот", CrewRole.CO_PILOT, f"CPT-{uuid.uuid4().hex[:6].upper()}"),
@@ -257,81 +508,310 @@ def _add_minimum_crew(aircraft: Aircraft) -> None:
         crew.start_duty()
         aircraft.add_crew_member(crew)
         state.crew_members[license_num] = crew
-        success(f"Добавлен: {name} ({role.name})")
+        print(f"[{license_num}] Crew: {name} | Role: {role.name} | "
+              f"License: {license_num} | Aircraft: {aircraft.tail_number} | on duty")
 
 
-def menu_issue_ticket() -> None:
-    """Пункт 2: Выпустить билет и зарегистрировать пассажира."""
-    header("ВЫПУСК БИЛЕТА И РЕГИСТРАЦИЯ")
+def menu_add_crew_member() -> None:
+    """Пункт 2: Добавить члена экипажа."""
+    header("ДОБАВИТЬ ЧЛЕНА ЭКИПАЖА")
 
     try:
-        name = safe_input("ФИО пассажира: ")
+        if not state.aircraft:
+            warning("Нет доступных самолётов. Сначала создайте самолёт.")
+            return
+
+        step(1, "Выбор самолёта")
+        print("Доступные самолёты:")
+        for key, aircraft in state.aircraft.items():
+            print(f"  [{key}] {aircraft.model} ({len(aircraft.crew)} чл. экипажа)")
+
+        aircraft = None
+        while aircraft is None:
+            tail = safe_input("\nБортовой номер самолёта: ")
+            if tail is None:
+                return
+            aircraft = state.get_aircraft(tail)
+            if not aircraft:
+                warning(f"Самолёт {tail} не найден.")
+
+        success(f"Выбран: {aircraft.model} ({aircraft.tail_number})")
+
+        step(2, "Выбор должности")
+        print("\n  1 - Пилот")
+        print("  2 - Второй пилот")
+        print("  3 - Штурман")
+        print("  4 - Бортпроводник")
+        print("  5 - Старший бортпроводник")
+        print("  6 - Бортинженер")
+
+        role_map = {
+            "1": CrewRole.PILOT,
+            "2": CrewRole.CO_PILOT,
+            "3": CrewRole.NAVIGATOR,
+            "4": CrewRole.FLIGHT_ATTENDANT,
+            "5": CrewRole.LEAD_ATTENDANT,
+            "6": CrewRole.ENGINEER,
+        }
+
+        role = None
+        while role is None:
+            role_choice = safe_input("\nВыберите должность (1-6): ")
+            if role_choice is None:
+                return
+            role = role_map.get(role_choice)
+            if not role:
+                warning("Неизвестная должность. Введите 1-6.")
+
+        step(3, "Ввод данных")
+        name = input_while_empty("ФИО: ")
         if name is None:
             return
 
-        passport = safe_input("Номер паспорта: ")
-        if passport is None:
+        license_num = None
+        while license_num is None:
+            lic = safe_input("Номер лицензии: ")
+            if lic is None:
+                return
+            lic = lic.strip().upper()
+            if not lic:
+                warning("Номер лицензии не может быть пустым.")
+                continue
+            if state.is_license_exists(lic):
+                warning(f"Лицензия {lic} уже существует!")
+                continue
+            license_num = lic
+
+        step(4, "Создание")
+        crew = CrewMember(full_name=name, role=role, license_number=license_num)
+        success(f"Создан: {crew.full_name} ({crew.role.name})")
+
+        if aircraft.add_crew_member(crew):
+            state.crew_members[license_num] = crew
+            success(f"Добавлен в экипаж {aircraft.tail_number}")
+        else:
+            warning("Ошибка добавления.")
+
+        start = safe_input("\nВыйти на дежурство? (y/n): ")
+        if start and start.lower() == 'y':
+            crew.start_duty()
+            success("На дежурстве")
+
+        print(f"\n{aircraft}")
+
+    except ValidationError as e:
+        error(f"Ошибка валидации: {e.message}")
+    except KeyboardInterrupt:
+        pass
+
+
+def menu_create_flight() -> None:
+    """Пункт 3: Выпустить рейс (с автоматическим расчётом маршрута)."""
+    header("ВЫПУСТИТЬ РЕЙС")
+
+    try:
+        if not state.aircraft:
+            warning("Нет доступных самолётов. Сначала создайте самолёт.")
             return
 
-        flight_num = safe_input("Номер рейса (например, SU123): ")
-        if flight_num is None:
+        step(1, "Выбор самолёта")
+        print("Доступные самолёты:")
+        for key, aircraft in state.aircraft.items():
+            # Проверяем, есть ли уже рейс
+            has_flight = state.get_flight_by_aircraft(aircraft)
+            status = "(рейс есть)" if has_flight else ""
+            print(f"  [{key}] {aircraft.model} {status}")
+
+        aircraft = None
+        while aircraft is None:
+            tail = safe_input("\nБортовой номер самолёта: ")
+            if tail is None:
+                return
+            aircraft = state.get_aircraft(tail)
+            if not aircraft:
+                warning(f"Самолёт {tail} не найден.")
+
+        # Проверяем, что нет рейса
+        existing = state.get_flight_by_aircraft(aircraft)
+        if existing:
+            error(f"У самолёта {aircraft.tail_number} уже есть рейс {existing.flight_number}!")
             return
 
-        seat = safe_input("Место (например, 12A): ")
+        success(f"Выбран: {aircraft.model} ({aircraft.tail_number})")
+
+        # Номер рейса
+        step(2, "Номер рейса")
+        flight_number = None
+        while flight_number is None:
+            num = safe_input("Номер рейса (например, SU123): ")
+            if num is None:
+                return
+            num = num.strip().upper()
+            if not num:
+                warning("Номер рейса не может быть пустым.")
+                continue
+            if state.is_flight_number_exists(num):
+                warning(f"Рейс {num} уже существует!")
+                continue
+            flight_number = num
+
+        # Выбор аэропортов (Требование 5)
+        step(3, "Аэропорт вылета")
+        departure = input_airport("Аэропорт вылета:")
+        if departure is None:
+            return
+
+        step(4, "Аэропорт прилёта")
+        destination = input_airport("Аэропорт прилёта:")
+        if destination is None:
+            return
+
+        if departure == destination:
+            error("Аэропорты вылета и прилёта совпадают!")
+            return
+
+        # Время вылета
+        step(5, "Время вылета")
+        print("Время вылета: сейчас + 24 часа (по умолчанию)")
+        departure_time = datetime.now() + timedelta(hours=24)
+
+        # Автоматический расчёт маршрута (Требование 7)
+        step(6, "Расчёт маршрута")
+        distance = get_distance(departure, destination)
+        fuel = distance * 3.5 * 1.1
+        duration_hours = distance / 800.0
+        hours = int(duration_hours)
+        minutes = int((duration_hours % 1) * 60)
+
+        info(f"Расстояние: {distance:.0f} км")
+        info(f"Топливо: {fuel:.0f} л (с резервом)")
+        info(f"Время полёта: ~{hours}h {minutes}m")
+
+        # Создание рейса
+        step(7, "Создание рейса")
+        flight = Flight(
+            flight_number=flight_number,
+            aircraft=aircraft,
+            departure=departure,
+            destination=destination,
+            departure_time=departure_time,
+            distance_km=distance,
+        )
+        # Привязываем маршрут к самолёту (для preflight_check)
+        from aircraft_model import FlightRoute
+        route = FlightRoute(departure, destination, distance)
+        aircraft.set_route(route)
+
+        state.flights[flight_number] = flight
+
+        success(f"Рейс создан: {flight}")
+
+    except ValidationError as e:
+        error(f"Ошибка: {e.message}")
+    except KeyboardInterrupt:
+        pass
+
+
+def menu_register_passenger() -> None:
+    """Пункт 4: Зарегистрировать пассажира на рейс."""
+    header("ЗАРЕГИСТРИРОВАТЬ ПАССАЖИРА НА РЕЙС")
+
+    try:
+        if not state.flights:
+            warning("Нет доступных рейсов. Сначала создайте рейс.")
+            return
+
+        step(1, "Выбор рейса")
+        print("Доступные рейсы:")
+        for fid, flight in state.flights.items():
+            available = flight.aircraft.capacity - flight.get_passenger_count()
+            print(f"  [{fid}] {flight.departure} -> {flight.destination} "
+                  f"(свободно: {available})")
+
+        flight = None
+        while flight is None:
+            flight_num = safe_input("\nНомер рейса: ")
+            if flight_num is None:
+                return
+            flight = state.get_flight(flight_num)
+            if not flight:
+                warning(f"Рейс {flight_num} не найден.")
+
+        success(f"Выбран: {flight.flight_number}")
+
+        if flight.get_passenger_count() >= flight.aircraft.capacity:
+            error("Самолёт полностью загружен!")
+            return
+
+        step(2, "Данные пассажира")
+        name = input_while_empty("ФИО: ")
+        if name is None:
+            return
+
+        passport = None
+        while passport is None:
+            pas = safe_input("Номер паспорта: ")
+            if pas is None:
+                return
+            pas = pas.strip().upper()
+            if not pas:
+                warning("Номер паспорта не может быть пустым.")
+                continue
+            if state.is_passport_exists(pas):
+                warning(f"Пассажир с паспортом {pas} уже зарегистрирован!")
+                continue
+            passport = pas
+
+        if flight.is_passenger_on_flight(passport):
+            error(f"Пассажир с паспортом {passport} уже на рейсе {flight.flight_number}!")
+            return
+
+        step(3, "Выбор места")
+        occupied_seats = flight._seats_taken.copy()
+        available = flight.aircraft.capacity - flight.get_passenger_count()
+        print(f"Свободных мест: {available}")
+
+        seat = input_until_valid_seat(
+            "Место (например, 12A): ",
+            occupied_seats,
+            flight.aircraft.capacity
+        )
         if seat is None:
             return
 
-        price_str = safe_input("Цена билета: ")
-        if price_str is None:
-            return
-        price = float(price_str)
+        success(f"Выбрано место: {seat}")
 
+        step(4, "Регистрация")
         passenger = Passenger(
             full_name=name,
             passport_number=passport,
             ticket_number=f"TKT-{uuid.uuid4().hex[:8].upper()}",
             seat_number=seat,
         )
-        success(f"Пассажир создан: {passenger.full_name}")
-
-        flight_time = datetime.now() + timedelta(hours=24)
-        ticket = Ticket.issue(
-            flight_number=flight_num,
-            flight_datetime=flight_time,
-            seat=seat,
-            price=price,
-            passport_number=passport,
-        )
-        success(f"Билет выпущен: {ticket.flight_number}, место {ticket.seat}")
-
-        ticket.validate()
-        success("Билет валиден")
-
         passenger.register_for_flight()
-        success(f"Пассажир {passenger.full_name} зарегистрирован")
+        state.passengers[passport] = passenger
 
-        state.passengers[passport.upper()] = passenger
-        state.tickets[ticket.passport_number] = ticket
-        success("Данные сохранены")
+        # Добавляем пассажира в самолёт (для внутреннего счётчика Aircraft)
+        flight.aircraft.add_passenger(passenger)
+        flight.add_passenger(passenger)
+        success(f"Пассажир {passenger.full_name} зарегистрирован!")
 
-        print(f"\nПассажир зарегистрирован!")
-        print(passenger)
-        print(ticket)
+        # Требование 1: отображение количества пассажиров
+        print(f"\n[INFO] На борту самолёта {flight.aircraft.tail_number} "
+              f"теперь {flight.get_passenger_count()} пассажиров")
+
+        print(f"\n{passenger}")
 
     except ValidationError as e:
-        error(f"Ошибка валидации: {e.message}")
+        error(f"Ошибка: {e.message}")
     except RegistrationError as e:
-        error(f"Ошибка регистрации: {e.message}")
-    except FlightError as e:
-        error(f"Ошибка билета: {e.message}")
-    except ValueError:
-        error("Некорректная цена")
+        error(f"Ошибка: {e.message}")
     except KeyboardInterrupt:
         pass
 
 
 def menu_takeoff_landing() -> None:
-    """Пункт 3: Запросить взлёт или посадку."""
+    """Пункт 5: Запросить взлёт или посадку (БЕЗ ВПП - Требование 3)."""
     header("ВЗЛЁТ ИЛИ ПОСАДКА")
 
     try:
@@ -349,50 +829,30 @@ def menu_takeoff_landing() -> None:
         for key, aircraft in state.aircraft.items():
             print(f"  [{key}] {aircraft.model} ({aircraft.status.name})")
 
-        tail = safe_input("\nБортовой номер: ")
-        if tail is None:
-            return
-
-        aircraft = state.get_aircraft(tail)
-        if not aircraft:
-            error(f"Самолёт {tail} не найден")
-            return
+        aircraft = None
+        while aircraft is None:
+            tail = safe_input("\nБортовой номер: ")
+            if tail is None:
+                return
+            aircraft = state.get_aircraft(tail)
+            if not aircraft:
+                warning(f"Самолёт {tail} не найден.")
 
         info(f"Текущий статус: {aircraft.status.name}")
 
-        if not state.runways:
-            warning("Нет доступных ВПП. Создаю новую...")
-            runway = Runway("RWY-01", 3000)
-            state.runways["RWY-01"] = runway
-        else:
-            print("Доступные ВПП:")
-            for rid, runway in state.runways.items():
-                print(f"  [{rid}] {runway.length}m ({runway.status.name})")
-
-            rw_id = safe_input("\nID ВПП: ")
-            if rw_id is None:
-                return
-
-            runway = state.get_runway(rw_id)
-            if not runway:
-                error(f"ВПП {rw_id} не найдена")
-                return
-
-        info(f"Статус ВПП: {runway.status.name}")
-
         if op == "1":
-            _do_takeoff(aircraft, runway)
+            _do_takeoff(aircraft)
         elif op == "2":
-            _do_landing(aircraft, runway)
+            _do_landing(aircraft)
 
-    except (TakeoffError, LandingError, RunwayError) as e:
+    except (TakeoffError, LandingError) as e:
         error(f"Операция невозможна: {e.message}")
     except KeyboardInterrupt:
         pass
 
 
-def _do_takeoff(aircraft: Aircraft, runway: Runway) -> None:
-    """Выполнить взлёт."""
+def _do_takeoff(aircraft: Aircraft) -> None:
+    """Выполнить взлёт (Требование 6 - проверка рейса)."""
     if not aircraft.crew:
         warning("Нет экипажа!")
         return
@@ -401,12 +861,13 @@ def _do_takeoff(aircraft: Aircraft, runway: Runway) -> None:
         error(f"Самолёт не на земле (статус: {aircraft.status.name})")
         return
 
-    can_takeoff = runway.request_takeoff(aircraft)
-    if can_takeoff:
-        success("ВПП предоставлена")
-    else:
-        warning(f"Самолёт добавлен в очередь (позиция: {runway.queue_size})")
+    # Требование 6: проверка рейса
+    flight = state.get_flight_by_aircraft(aircraft)
+    if not flight:
+        error("Нет зарегистрированного рейса для этого самолёта!")
         return
+
+    success("Рейс подтверждён")
 
     checks = aircraft.preflight_check()
     for check_name, result in checks.items():
@@ -415,7 +876,6 @@ def _do_takeoff(aircraft: Aircraft, runway: Runway) -> None:
 
     if not all(checks.values()):
         error("Предполётная проверка не пройдена!")
-        runway.release()
         return
 
     aircraft.take_off()
@@ -423,26 +883,33 @@ def _do_takeoff(aircraft: Aircraft, runway: Runway) -> None:
     print(aircraft)
 
 
-def _do_landing(aircraft: Aircraft, runway: Runway) -> None:
-    """Выполнить посадку."""
+def _do_landing(aircraft: Aircraft) -> None:
+    """Выполнить посадку с очисткой рейса."""
     if aircraft.status != AircraftStatus.IN_FLIGHT:
         error(f"Самолёт не в воздухе (статус: {aircraft.status.name})")
         return
 
-    can_land = runway.request_landing(aircraft)
-    if can_land:
-        success("ВПП предоставлена")
-    else:
-        warning(f"Самолёт добавлен в очередь (позиция: {runway.queue_size})")
-        return
-
     aircraft.land()
     success(f"Посадка выполнена! Статус: {aircraft.status.name}")
+
+    # Очищаем пассажиров и маршрут
+    aircraft._passengers.clear()
+    aircraft._flight_route = None
+
+    # Удаляем рейс из state для этого самолёта
+    for flight_num, flight in list(state.flights.items()):
+        if flight.aircraft.tail_number == aircraft.tail_number:
+            del state.flights[flight_num]
+            break
+
+    success("Рейс завершён. Пассажиры и маршрут очищены.")
+    info("Самолёт и экипаж готовы к повторному использованию.")
+
     print(aircraft)
 
 
 def menu_inflight_service() -> None:
-    """Пункт 4: Запустить бортовое обслуживание."""
+    """Пункт 6: Бортовое обслуживание."""
     header("БОРТОВОЕ ОБСЛУЖИВАНИЕ")
 
     try:
@@ -454,14 +921,14 @@ def menu_inflight_service() -> None:
         for key, aircraft in state.aircraft.items():
             print(f"  [{key}] {aircraft.model}")
 
-        tail = safe_input("\nБортовой номер: ")
-        if tail is None:
-            return
-
-        aircraft = state.get_aircraft(tail)
-        if not aircraft:
-            error(f"Самолёт {tail} не найден")
-            return
+        aircraft = None
+        while aircraft is None:
+            tail = safe_input("\nБортовой номер: ")
+            if tail is None:
+                return
+            aircraft = state.get_aircraft(tail)
+            if not aircraft:
+                warning(f"Самолёт {tail} не найден.")
 
         service = aircraft.get_service()
 
@@ -470,10 +937,9 @@ def menu_inflight_service() -> None:
         print("  2 - Напитки")
         print("  3 - Помощь")
         print("  4 - Wi-Fi")
-        print("  5 - Развлечения")
-        print("  6 - Показать инвентарь")
+        print("  5 - Показать инвентарь")
 
-        svc_choice = safe_input("\nВыберите (1-6): ")
+        svc_choice = safe_input("\nВыберите (1-5): ")
         if svc_choice is None:
             return
 
@@ -489,13 +955,10 @@ def menu_inflight_service() -> None:
         elif svc_choice == "2":
             result = service.provide_beverage("кофе")
         elif svc_choice == "3":
-            req_type = safe_input("Тип (обычная/special): ") or "general"
-            result = service.assist_passenger(req_type)
+            result = service.assist_passenger("general")
         elif svc_choice == "4":
             result = service.provide_wifi(passenger_id)
         elif svc_choice == "5":
-            result = service.provide_entertainment(passenger_id)
-        elif svc_choice == "6":
             print(service)
             return
         else:
@@ -515,61 +978,8 @@ def menu_inflight_service() -> None:
         pass
 
 
-def menu_plan_route() -> None:
-    """Пункт 5: Спланировать маршрут."""
-    header("ПЛАНИРОВАНИЕ МАРШРУТА")
-
-    try:
-        departure = safe_input("Аэропорт вылета (IATA, например SVO): ")
-        if departure is None:
-            return
-
-        destination = safe_input("Аэропорт прилёта (IATA, например LED): ")
-        if destination is None:
-            return
-
-        dist_str = safe_input("Расстояние (км): ")
-        if dist_str is None:
-            return
-        distance = float(dist_str)
-
-        route = FlightRoute(
-            departure=departure.upper(),
-            destination=destination.upper(),
-            distance=distance,
-        )
-        success(f"Маршрут: {route.departure} -> {route.destination}")
-
-        fuel = route.calculate_fuel()
-        info(f"Требуется топлива: {fuel:.1f} л (с резервом 10%)")
-
-        duration = route.estimate_duration()
-        hours = int(duration.total_seconds() // 3600)
-        minutes = int((duration.total_seconds() % 3600) // 60)
-        info(f"Расчётное время: ~{hours}h {minutes}m")
-
-        alt = safe_input("\nАльтернативный аэропорт (Enter - нет): ")
-        if alt:
-            route.add_alternative(alt.upper())
-            success(f"Добавлен: {alt.upper()}")
-
-        route_id = f"{route.departure}-{route.destination}"
-        state.routes[route_id] = route
-        success(f"Маршрут сохранён как [{route_id}]")
-
-        print(f"\nМаршрут запланирован!")
-        print(route)
-
-    except ValidationError as e:
-        error(f"Ошибка валидации: {e.message}")
-    except ValueError:
-        error("Некорректное число для расстояния")
-    except KeyboardInterrupt:
-        pass
-
-
 def menu_safety_check() -> None:
-    """Пункт 6: Проверка безопасности."""
+    """Пункт 7: Проверка безопасности."""
     header("ПРОВЕРКА БЕЗОПАСНОСТИ")
 
     try:
@@ -581,14 +991,14 @@ def menu_safety_check() -> None:
         for key, aircraft in state.aircraft.items():
             print(f"  [{key}] {aircraft.model}")
 
-        tail = safe_input("\nБортовой номер: ")
-        if tail is None:
-            return
-
-        aircraft = state.get_aircraft(tail)
-        if not aircraft:
-            error(f"Самолёт {tail} не найден")
-            return
+        aircraft = None
+        while aircraft is None:
+            tail = safe_input("\nБортовой номер: ")
+            if tail is None:
+                return
+            aircraft = state.get_aircraft(tail)
+            if not aircraft:
+                warning(f"Самолёт {tail} не найден.")
 
         checks = aircraft.preflight_check()
         all_passed = True
@@ -599,31 +1009,40 @@ def menu_safety_check() -> None:
             if not result:
                 all_passed = False
 
+        # Проверка рейса
+        flight = state.get_flight_by_aircraft(aircraft)
+        if flight:
+            print(f"  [OK] flight_assigned: рейс {flight.flight_number}")
+        else:
+            print(f"  [FAIL] flight_assigned: нет рейса")
+            all_passed = False
+
         if all_passed:
-            success("Все проверки пройдены! Самолёт готов к вылету.")
+            success("Все проверки пройдены!")
         else:
             warning("Не все проверки пройдены.")
 
-        print(f"\nДетали: {aircraft.model}, пассажиров: {aircraft.get_passenger_count()}, "
-              f"экипажа: {len(aircraft.crew)}, статус: {aircraft.status.name}")
+        print(f"\n{aircraft.model} | пассажиров: {aircraft.get_passenger_count()} | "
+              f"экипажа: {len(aircraft.crew)} | статус: {aircraft.status.name}")
 
     except KeyboardInterrupt:
         pass
 
 
 def menu_show_state() -> None:
-    """Пункт 7: Показать состояние системы."""
+    """Пункт 8: Состояние системы."""
     state.summary()
 
 
 def menu_load_demo() -> None:
-    """Пункт 8: Загрузить демо-данные."""
+    """Пункт 9: Загрузить демо-данные."""
     header("ЗАГРУЗКА ДЕМО-ДАННЫХ")
 
     try:
         info("Очистка предыдущего состояния...")
         state.reset()
 
+        # Самолёт
         aircraft = Aircraft(
             model="Boeing 737-800",
             tail_number="RA-737MM",
@@ -632,21 +1051,35 @@ def menu_load_demo() -> None:
         aircraft.set_airport("SVO")
         state.aircraft["RA-737MM"] = aircraft
         state.in_flight_services["RA-737MM"] = aircraft.get_service()
-        success(f"Создан: {aircraft}")
+        success(f"Самолёт: {aircraft.tail_number}")
 
-        crew_list = [
-            ("Иван Сидоров", CrewRole.PILOT, "PLT-SID001"),
-            ("Анна Козлова", CrewRole.CO_PILOT, "PLT-KOZ002"),
-            ("Пётр Волков", CrewRole.FLIGHT_ATTENDANT, "FA-VOL003"),
-            ("Елена Соколова", CrewRole.FLIGHT_ATTENDANT, "FA-SOK004"),
-        ]
-        for name, role, lic in crew_list:
-            crew = CrewMember(name, role, lic)
-            crew.start_duty()
-            aircraft.add_crew_member(crew)
-            state.crew_members[lic] = crew
-            success(f"  {name} ({role.name})")
+        # Авто-экипаж
+        print("\nЭкипаж:")
+        _create_minimum_crew(aircraft)
 
+        # Рейс с автоматическим расчётом
+        distance = get_distance("SVO", "LED")
+        flight = Flight(
+            flight_number="SU737",
+            aircraft=aircraft,
+            departure="SVO",
+            destination="LED",
+            departure_time=datetime.now() + timedelta(hours=2),
+            distance_km=distance,
+        )
+        # Привязываем маршрут к самолёту
+        from aircraft_model import FlightRoute
+        route = FlightRoute("SVO", "LED", distance)
+        aircraft.set_route(route)
+
+        state.flights["SU737"] = flight
+        print(f"\nМаршрут: {distance:.0f} км, "
+              f"топливо: {distance * 3.5 * 1.1:.0f} л, "
+              f"время: ~{distance/800:.1f}ч")
+        success(f"Рейс: {flight}")
+
+        # Пассажиры
+        print("\nПассажиры:")
         passengers_data = [
             ("Михаил Петров", "MP1234567", "15A"),
             ("Ольга Иванова", "OI2345678", "15B"),
@@ -656,27 +1089,9 @@ def menu_load_demo() -> None:
             p = Passenger(name, passport, f"TKT-{uuid.uuid4().hex[:6].upper()}", seat)
             p.register_for_flight()
             aircraft.add_passenger(p)
+            flight.add_passenger(p)
             state.passengers[passport] = p
             success(f"  {name}, место {seat}")
-
-        route = FlightRoute("SVO", "LED", 650)
-        aircraft.set_route(route)
-        state.routes["SVO-LED"] = route
-        success(f"  Маршрут: {route}")
-
-        runway = Runway("RWY-SVO", 3000)
-        state.runways["RWY-SVO"] = runway
-        success(f"  ВПП: {runway}")
-
-        ticket = Ticket.issue(
-            flight_number="SU737",
-            flight_datetime=datetime.now() + timedelta(hours=2),
-            seat="1A",
-            price=599.99,
-            passport_number="MP1234567",
-        )
-        state.tickets["MP1234567"] = ticket
-        success(f"  Билет: {ticket.flight_number}")
 
         success("\nДемо-данные загружены!")
 
@@ -684,115 +1099,18 @@ def menu_load_demo() -> None:
         error(f"Ошибка: {e}")
 
 
-def menu_add_crew_member() -> None:
-    """Пункт 9: Добавить члена экипажа к существующему самолёту."""
-    header("ДОБАВИТЬ ЧЛЕНА ЭКИПАЖА")
-
-    try:
-        # Выбор самолёта
-        if not state.aircraft:
-            warning("Нет доступных самолётов. Сначала создайте самолёт.")
-            return
-
-        step(1, "Выбор самолёта")
-        print("Доступные самолёты:")
-        for key, aircraft in state.aircraft.items():
-            print(f"  [{key}] {aircraft.model} ({len(aircraft.crew)} чл. экипажа)")
-
-        tail = safe_input("\nБортовой номер самолёта: ")
-        if tail is None:
-            return
-
-        aircraft = state.get_aircraft(tail)
-        if not aircraft:
-            error(f"Самолёт {tail} не найден")
-            return
-
-        success(f"Выбран: {aircraft.model} ({aircraft.tail_number})")
-
-        # Выбор роли
-        step(2, "Выбор должности")
-        print("\nДоступные должности:")
-        print("  1 - Пилот (PILOT)")
-        print("  2 - Второй пилот (CO_PILOT)")
-        print("  3 - Штурман (NAVIGATOR)")
-        print("  4 - Бортпроводник (FLIGHT_ATTENDANT)")
-        print("  5 - Старший бортпроводник (LEAD_ATTENDANT)")
-        print("  6 - Бортинженер (ENGINEER)")
-
-        role_choice = safe_input("\nВыберите должность (1-6): ")
-        if role_choice is None:
-            return
-
-        role_map = {
-            "1": CrewRole.PILOT,
-            "2": CrewRole.CO_PILOT,
-            "3": CrewRole.NAVIGATOR,
-            "4": CrewRole.FLIGHT_ATTENDANT,
-            "5": CrewRole.LEAD_ATTENDANT,
-            "6": CrewRole.ENGINEER,
-        }
-        role = role_map.get(role_choice)
-        if not role:
-            error("Неизвестная должность")
-            return
-
-        # Ввод данных
-        step(3, "Ввод данных члена экипажа")
-        name = safe_input("ФИО: ")
-        if name is None:
-            return
-
-        license_num = safe_input("Номер лицензии: ")
-        if license_num is None:
-            return
-
-        # Создание члена экипажа
-        step(4, "Создание члена экипажа")
-        crew = CrewMember(
-            full_name=name,
-            role=role,
-            license_number=license_num,
-        )
-        success(f"Создан: {crew.full_name} ({crew.role.name})")
-
-        # Добавление в самолёт
-        step(5, "Добавление в экипаж")
-        if aircraft.add_crew_member(crew):
-            state.crew_members[license_num] = crew
-            success(f"Добавлен в экипаж {aircraft.tail_number}")
-        else:
-            warning("Член экипажа с таким номером лицензии уже есть")
-
-        # Выход на дежурство
-        step(6, "Выход на дежурство")
-        start = safe_input("Выйти на дежурство? (y/n): ")
-        if start and start.lower() == 'y':
-            crew.start_duty()
-            success("На дежурстве")
-
-        print(f"\n{aircraft}")
-
-    except ValidationError as e:
-        error(f"Ошибка валидации: {e.message}")
-    except CrewError as e:
-        error(f"Ошибка экипажа: {e.message}")
-    except KeyboardInterrupt:
-        pass
-
-
 def print_menu() -> None:
-    """Вывести меню."""
+    """Вывести меню (без пункта планирования маршрута - Требование 7)."""
     print("\n=== МЕНЮ ===")
     print("1. Создать самолёт")
-    print("2. Выпустить билет и зарегистрировать пассажира")
-    print("3. Запросить взлёт или посадку")
-    print("4. Бортовое обслуживание")
-    print("5. Спланировать маршрут")
-    print("6. Проверка безопасности")
-    print("7. Состояние системы")
-    print("8. Загрузить демо-данные")
-    print("9. Добавить члена экипажа")
+    print("2. Добавить члена экипажа")
+    print("3. Выпустить рейс")
+    print("4. Зарегистрировать пассажира на рейс")
+    print("5. Запросить взлёт или посадку")
+    print("6. Бортовое обслуживание")
+    print("7. Проверка безопасности")
+    print("8. Состояние системы")
+    print("9. Загрузить демо-данные")
     print("0. Выход")
     print("=============")
 
@@ -822,21 +1140,21 @@ def main() -> None:
             elif choice == 1:
                 menu_create_aircraft()
             elif choice == 2:
-                menu_issue_ticket()
-            elif choice == 3:
-                menu_takeoff_landing()
-            elif choice == 4:
-                menu_inflight_service()
-            elif choice == 5:
-                menu_plan_route()
-            elif choice == 6:
-                menu_safety_check()
-            elif choice == 7:
-                menu_show_state()
-            elif choice == 8:
-                menu_load_demo()
-            elif choice == 9:
                 menu_add_crew_member()
+            elif choice == 3:
+                menu_create_flight()
+            elif choice == 4:
+                menu_register_passenger()
+            elif choice == 5:
+                menu_takeoff_landing()
+            elif choice == 6:
+                menu_inflight_service()
+            elif choice == 7:
+                menu_safety_check()
+            elif choice == 8:
+                menu_show_state()
+            elif choice == 9:
+                menu_load_demo()
             else:
                 warning(f"Неизвестный пункт: {choice}")
 
