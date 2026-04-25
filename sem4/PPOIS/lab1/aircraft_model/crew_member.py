@@ -77,10 +77,6 @@ class CrewMember:
         """Проверить, на дежурстве ли член экипажа."""
         return self._is_on_duty
 
-    def get_role(self) -> CrewRole:
-        """Получить роль (метод-версия)."""
-        return self._role
-
     def start_duty(self) -> bool:
         """
         Начать дежурство.

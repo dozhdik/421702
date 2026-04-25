@@ -46,8 +46,5 @@ class ServiceType(Enum):
     """Типы бортовых услуг."""
     MEAL = auto()
     BEVERAGE = auto()
-    ENTERTAINMENT = auto()
     ASSISTANCE = auto()
-    DUTY_FREE = auto()
     WIFI = auto()
-    SPECIAL_ASSISTANCE = auto()

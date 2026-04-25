@@ -155,14 +155,6 @@ class Passenger:
         self._is_registered = True
         return True
 
-    def get_seat_number(self) -> Optional[str]:
-        """Получить номер места пассажира."""
-        return self._seat_number
-
-    def is_registered_method(self) -> bool:
-        """Проверить регистрацию (метод-версия)."""
-        return self._is_registered
-
     def cancel_registration(self) -> bool:
         """
         Отменить регистрацию пассажира.

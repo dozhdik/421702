@@ -21,13 +21,18 @@ class InFlightService:
 
     # Начальные значения инвентаря
     DEFAULT_INVENTORY: Dict[ServiceType, int] = {
-        ServiceType.MEAL: 2,
-        ServiceType.BEVERAGE: 4,
-        ServiceType.ENTERTAINMENT: 6,
-        ServiceType.ASSISTANCE: 10,
-        ServiceType.DUTY_FREE: 1,
+        ServiceType.MEAL: 150,
+        ServiceType.BEVERAGE: 150,
+        ServiceType.ASSISTANCE: 150,
+        ServiceType.WIFI: 150,
+    }
+
+    # Лимиты услуг на пассажира
+    SERVICE_LIMITS: Dict[ServiceType, int] = {
+        ServiceType.MEAL: 1,
+        ServiceType.BEVERAGE: 5,
+        ServiceType.ASSISTANCE: 5,
         ServiceType.WIFI: 1,
-        ServiceType.SPECIAL_ASSISTANCE: 2,
     }
 
     def __init__(self) -> None:
@@ -40,6 +45,7 @@ class InFlightService:
         self._services_provided: Dict[ServiceType, int] = {
             st: 0 for st in ServiceType
         }
+        self._passenger_usage: Dict[str, Dict[ServiceType, int]] = {}
 
     @property
     def available_services(self) -> List[str]:
@@ -99,6 +105,25 @@ class InFlightService:
 
         self._inventory[service_type] += quantity
 
+    def _check_passenger_limit(self, passenger_id: str, service_type: ServiceType) -> None:
+        """Проверить лимит услуги для пассажира."""
+        if passenger_id not in self._passenger_usage:
+            self._passenger_usage[passenger_id] = {st: 0 for st in ServiceType}
+
+        current_usage = self._passenger_usage[passenger_id][service_type]
+        limit = self.SERVICE_LIMITS[service_type]
+
+        if current_usage >= limit:
+            service_names = {
+                ServiceType.MEAL: "Питание",
+                ServiceType.BEVERAGE: "Напитки",
+                ServiceType.ASSISTANCE: "Помощь",
+                ServiceType.WIFI: "Wi-Fi",
+            }
+            raise ServiceError(
+                f"Пассажир уже использовал лимит услуги \"{service_names[service_type]}\" ({current_usage}/{limit})"
+            )
+
     def _use_supply(self, service_type: ServiceType, amount: int = 1) -> None:
         """Использовать запасы (внутренний метод)."""
         if self._inventory.get(service_type, 0) < amount:
@@ -108,24 +133,28 @@ class InFlightService:
             )
         self._inventory[service_type] -= amount
 
-    def provide_meal(self, meal_type: str) -> Dict[str, str]:
+    def provide_meal(self, meal_type: str, passenger_id: str) -> Dict[str, str]:
         """
         Предоставить питание.
 
         Args:
             meal_type: Тип питания.
+            passenger_id: ID пассажира.
 
         Returns:
             Словарь с результатом.
 
         Raises:
-            ServiceError: Если услуга недоступна.
+            ServiceError: Если услуга недоступна или превышен лимит.
         """
+        self._check_passenger_limit(passenger_id, ServiceType.MEAL)
+
         if not self.check_supplies(ServiceType.MEAL):
             raise ServiceError("Meals are out of stock")
 
         self._use_supply(ServiceType.MEAL)
         self._services_provided[ServiceType.MEAL] += 1
+        self._passenger_usage[passenger_id][ServiceType.MEAL] += 1
 
         return {
             "service": "MEAL",
@@ -133,86 +162,62 @@ class InFlightService:
             "status": "provided",
         }
 
-    def assist_passenger(self, request: str) -> Dict[str, str]:
+    def assist_passenger(self, request: str, passenger_id: str) -> Dict[str, str]:
         """
         Оказать помощь пассажиру.
 
         Args:
             request: Тип запроса.
-
-        Returns:
-            Словарь с результатом.
-
-        Raises:
-            ServiceError: Если услуга недоступна.
-        """
-        # Проверяем тип помощи
-        if request.lower() in ("wheelchair", "special", "medical"):
-            service_type = ServiceType.SPECIAL_ASSISTANCE
-        else:
-            service_type = ServiceType.ASSISTANCE
-
-        if not self.check_supplies(service_type):
-            raise ServiceError(
-                f"Assistance service ({request}) is not available"
-            )
-
-        self._use_supply(service_type)
-        self._services_provided[service_type] += 1
-
-        return {
-            "service": service_type.name,
-            "request": request,
-            "status": "provided",
-        }
-
-    def provide_beverage(self, beverage_type: str) -> Dict[str, str]:
-        """
-        Предоставить напиток.
-
-        Args:
-            beverage_type: Тип напитка.
-
-        Returns:
-            Словарь с результатом.
-
-        Raises:
-            ServiceError: Если услуга недоступна.
-        """
-        if not self.check_supplies(ServiceType.BEVERAGE):
-            raise ServiceError("Beverages are out of stock")
-
-        self._use_supply(ServiceType.BEVERAGE)
-        self._services_provided[ServiceType.BEVERAGE] += 1
-
-        return {
-            "service": "BEVERAGE",
-            "type": beverage_type,
-            "status": "provided",
-        }
-
-    def provide_entertainment(self, passenger_id: str) -> Dict[str, str]:
-        """
-        Предоставить развлечения.
-
-        Args:
             passenger_id: ID пассажира.
 
         Returns:
             Словарь с результатом.
 
         Raises:
-            ServiceError: Если услуга недоступна.
+            ServiceError: Если услуга недоступна или превышен лимит.
         """
-        if not self.check_supplies(ServiceType.ENTERTAINMENT):
-            raise ServiceError("Entertainment system unavailable")
+        self._check_passenger_limit(passenger_id, ServiceType.ASSISTANCE)
 
-        self._use_supply(ServiceType.ENTERTAINMENT)
+        if not self.check_supplies(ServiceType.ASSISTANCE):
+            raise ServiceError(f"Assistance service ({request}) is not available")
+
+        self._use_supply(ServiceType.ASSISTANCE)
+        self._services_provided[ServiceType.ASSISTANCE] += 1
+        self._passenger_usage[passenger_id][ServiceType.ASSISTANCE] += 1
 
         return {
-            "service": "ENTERTAINMENT",
-            "passenger": passenger_id,
-            "status": "activated",
+            "service": ServiceType.ASSISTANCE.name,
+            "request": request,
+            "status": "provided",
+        }
+
+    def provide_beverage(self, beverage_type: str, passenger_id: str) -> Dict[str, str]:
+        """
+        Предоставить напиток.
+
+        Args:
+            beverage_type: Тип напитка.
+            passenger_id: ID пассажира.
+
+        Returns:
+            Словарь с результатом.
+
+        Raises:
+            ServiceError: Если услуга недоступна или превышен лимит.
+        """
+        self._check_passenger_limit(passenger_id, ServiceType.BEVERAGE)
+
+        if not self.check_supplies(ServiceType.BEVERAGE):
+            raise ServiceError("Beverages are out of stock")
+
+        self._use_supply(ServiceType.BEVERAGE)
+        self._services_provided[ServiceType.BEVERAGE] += 1
+        self._passenger_usage[passenger_id][ServiceType.BEVERAGE] += 1
+
+        return {
+            "service": "BEVERAGE",
+            "type": beverage_type,
+            "status": "provided",
         }
 
     def provide_wifi(self, passenger_id: str) -> Dict[str, str]:
@@ -226,12 +231,15 @@ class InFlightService:
             Словарь с результатом.
 
         Raises:
-            ServiceError: Если услуга недоступна.
+            ServiceError: Если услуга недоступна или превышен лимит.
         """
+        self._check_passenger_limit(passenger_id, ServiceType.WIFI)
+
         if not self.check_supplies(ServiceType.WIFI):
             raise ServiceError("Wi-Fi is not available")
 
         self._use_supply(ServiceType.WIFI)
+        self._passenger_usage[passenger_id][ServiceType.WIFI] += 1
 
         return {
             "service": "WIFI",

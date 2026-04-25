@@ -98,64 +98,6 @@ class FlightRoute:
         """Получить список альтернативных аэропортов."""
         return self._alternative_airports.copy()
 
-    def add_alternative(self, airport_code: str) -> None:
-        """
-        Добавить альтернативный аэропорт.
-
-        Args:
-            airport_code: IATA-код аэропорта.
-        """
-        self._validate_airport_code(airport_code, "alternative_airport")
-        if airport_code not in self._alternative_airports:
-            self._alternative_airports.append(airport_code.upper())
-
-    def calculate_fuel(
-        self,
-        consumption_per_km: Optional[float] = None,
-    ) -> float:
-        """
-        Рассчитать необходимое топливо.
-
-        Args:
-            consumption_per_km: Расход топлива (л/км).
-                             Если None, используется средний.
-
-        Returns:
-            Необходимое количество топлива в литрах.
-        """
-        consumption = consumption_per_km or self.AVERAGE_FUEL_CONSUMPTION
-        # Добавляем 10% резерв
-        return self._distance * consumption * 1.1
-
-    def estimate_duration(
-        self,
-        average_speed: Optional[float] = None,
-    ) -> timedelta:
-        """
-        Рассчитать расчётное время полёта.
-
-        Args:
-            average_speed: Средняя скорость (км/ч).
-                          Если None, используется средняя.
-
-        Returns:
-            Расчётное время полёта.
-        """
-        speed = average_speed or self.AVERAGE_SPEED_KMH
-        return timedelta(hours=self._distance / speed)
-
-    def is_route_compatible(self, other: FlightRoute) -> bool:
-        """
-        Проверить совместимость маршрутов.
-
-        Args:
-            other: Другой маршрут.
-
-        Returns:
-            True если маршруты совместимы для стыковки.
-        """
-        return self._destination == other.departure
-
     def __repr__(self) -> str:
         return (
             f"FlightRoute("
@@ -180,24 +122,3 @@ class FlightRoute:
             f"Distance: {self._distance:.0f} km | "
             f"Duration: ~{hours}h {minutes}m{alternatives}"
         )
-
-    def __add__(self, other: FlightRoute) -> FlightRoute:
-        """Объединить два маршрута (stitching)."""
-        if not self.is_route_compatible(other):
-            raise ValidationError(
-                "routes",
-                "Routes are not compatible for stitching",
-            )
-
-        combined = FlightRoute(
-            self._departure,
-            other.destination,
-            self._distance + other.distance,
-        )
-
-        for alt in self._alternative_airports:
-            combined.add_alternative(alt)
-        for alt in other.alternative_airports:
-            combined.add_alternative(alt)
-
-        return combined
