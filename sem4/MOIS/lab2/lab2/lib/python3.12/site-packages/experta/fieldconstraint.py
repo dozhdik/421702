@@ -1,7 +1,10 @@
-from collections.abc import Callable
-
 from experta.conditionalelement import ConditionalElement
 from experta.pattern import Bindable
+
+try:
+    from collections.abc import Callable  # noqa
+except ImportError:
+    from collections import Callable  # noqa
 
 __all__ = ['L', 'W', 'P']
 

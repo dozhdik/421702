@@ -1,10 +1,14 @@
 """Token object and related objects needed by the RETE algorithm."""
 
 from collections import namedtuple
-from collections.abc import Mapping
 from enum import Enum
 
 from experta.fact import Fact
+
+try:
+    from collections.abc import Mapping  # noqa
+except ImportError:
+    from collections import Mapping  # noqa
 
 
 class TokenInfo(namedtuple('_TokenInfo', ['data', 'context'])):

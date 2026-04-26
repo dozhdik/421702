@@ -1,9 +1,13 @@
-from collections.abc import Iterable
 from functools import update_wrapper
 import inspect
 
 from experta import watchers
 from experta.conditionalelement import ConditionalElement
+
+try:
+    from collections.abc import Iterable  # noqa
+except ImportError:
+    from collections import Iterable  # noqa
 
 
 class Rule(ConditionalElement):

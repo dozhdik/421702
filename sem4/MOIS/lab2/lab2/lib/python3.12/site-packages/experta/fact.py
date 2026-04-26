@@ -1,7 +1,6 @@
 from itertools import chain
 from functools import lru_cache
 import abc
-import collections
 
 from schema import Schema
 
@@ -9,6 +8,11 @@ from experta.pattern import Bindable
 from experta.utils import freeze, unfreeze
 from experta.conditionalelement import OperableCE
 from experta.conditionalelement import ConditionalElement
+
+try:
+    from collections.abc import Callable  # noqa
+except ImportError:
+    from collections import Callable  # noqa
 
 
 class BaseField(metaclass=abc.ABCMeta):
@@ -70,7 +74,7 @@ class Fact(OperableCE, Bindable, dict, metaclass=Validable):
                 raise KeyError(key)
             elif key in self.__defaults:
                 return self.__defaults[key]
-            elif isinstance(default, collections.abc.Callable):
+            elif isinstance(default, Callable):
                 return self.__defaults.setdefault(key, default())
             else:
                 return self.__defaults.setdefault(key, default)

@@ -1,5 +1,4 @@
 from collections import namedtuple
-from collections.abc import Mapping
 from functools import singledispatch
 import dis
 import inspect
@@ -10,6 +9,10 @@ from experta.fieldconstraint import ANDFC, ORFC, NOTFC
 from .abstract import Check
 from experta.watchers import MATCH
 
+try:
+    from collections.abc import Mapping  # noqa
+except ImportError:
+    from collections import Mapping  # noqa
 
 CheckFunction = namedtuple('CheckFunction',
                            ['key_a', 'key_b', 'expected', 'check'])
@@ -232,15 +235,15 @@ class FeatureCheck(Check,
 
 
 class SameContextCheck(Check):
-    def __call__(self, l, r):
-        for key, value in l.items():
+    def __call__(self, left, right):
+        for key, value in left.items():
             if key[0] is False:
                 raise RuntimeError(
                     'Negated value "%s" present before capture.' % key[1])
             else:
-                if key in r and value != r[key]:
+                if key in right and value != right[key]:
                     return False
-                if (False, key) in r and value == r[(False, key)]:
+                if (False, key) in right and value == right[(False, key)]:
                     return False
         else:
             return True

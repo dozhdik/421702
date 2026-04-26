@@ -1,6 +1,10 @@
 """Mixing classes for the RETE nodes."""
 from collections import namedtuple
-from collections.abc import Callable
+
+try:
+    from collections.abc import Callable  # noqa
+except ImportError:
+    from collections import Callable  # noqa
 
 
 #: Used to store node/callback pair in nodes children set.

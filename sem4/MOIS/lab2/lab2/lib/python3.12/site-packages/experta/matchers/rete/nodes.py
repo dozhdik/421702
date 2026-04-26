@@ -6,7 +6,6 @@ types (like `The One-input Node for Testing Variable Bindings) are not
 needed in this implementation.
 
 """
-from collections.abc import Mapping
 from contextlib import suppress
 from itertools import chain
 
@@ -17,6 +16,11 @@ from experta.watchers import MATCHER, MATCH
 from . import mixins
 from .abstract import Node, OneInputNode, TwoInputNode
 from .token import Token
+
+try:
+    from collections.abc import Mapping  # noqa
+except ImportError:
+    from collections import Mapping  # noqa
 
 
 class BusNode(mixins.AnyChild,
