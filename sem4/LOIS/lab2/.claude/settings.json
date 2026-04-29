@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(swipl monkey_banana.pl -g \"solve\\(Path\\), print_path\\(Path\\), halt\")",
+      "Bash(swipl monkey_banana.pl -g \"run, halt.\")"
+    ],
+    "additionalDirectories": [
+      "/home/user/prolog"
+    ]
+  }
+}
