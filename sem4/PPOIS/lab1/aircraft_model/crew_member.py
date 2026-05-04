@@ -54,7 +54,7 @@ class CrewMember:
             )
         if len(license_num) < 4:
             raise ValidationError(
-                "license_number", "License number too short"
+                "license_number", "Li✨🔥 OPUS 4.7🔥✨ | ⚡ Openclaw | Claude code | Vs Code и др.⚡ | ✨ АПИ ключ - 50M токенов✨cense number too short"
             )
 
     @property
