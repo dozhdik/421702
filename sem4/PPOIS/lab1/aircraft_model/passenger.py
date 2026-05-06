@@ -17,7 +17,6 @@ class Passenger:
     Атрибуты:
         full_name: Полное имя пассажира.
         passport_number: Номер паспорта (уникальный идентификатор).
-        ticket_number: Номер билета.
         seat_number: Номер места в салоне.
         is_registered: Статус регистрации на рейс.
     """
@@ -26,16 +25,13 @@ class Passenger:
         self,
         full_name: str,
         passport_number: str,
-        ticket_number: str,
         seat_number: Optional[str] = None,
     ) -> None:
         self._validate_name(full_name)
         self._validate_passport(passport_number)
-        self._validate_ticket_number(ticket_number)
 
         self._full_name = full_name
         self._passport_number = passport_number
-        self._ticket_number = ticket_number
         self._seat_number: Optional[str] = None
         self._is_registered = False
 
@@ -70,14 +66,6 @@ class Passenger:
             )
 
     @staticmethod
-    def _validate_ticket_number(ticket: str) -> None:
-        """Валидация номера билета."""
-        if not ticket or not ticket.strip():
-            raise ValidationError(
-                "ticket_number", "Ticket number cannot be empty"
-            )
-
-    @staticmethod
     def _validate_seat(seat: str) -> None:
         """Валидация номера места."""
         if not seat:
@@ -99,11 +87,6 @@ class Passenger:
     def passport_number(self) -> str:
         """Получить номер паспорта."""
         return self._passport_number
-
-    @property
-    def ticket_number(self) -> str:
-        """Получить номер билета."""
-        return self._ticket_number
 
     @property
     def seat_number(self) -> Optional[str]:
@@ -153,18 +136,6 @@ class Passenger:
             )
 
         self._is_registered = True
-        return True
-
-    def cancel_registration(self) -> bool:
-        """
-        Отменить регистрацию пассажира.
-
-        Returns:
-            True если отмена успешна.
-        """
-        if not self._is_registered:
-            return False
-        self._is_registered = False
         return True
 
     def __repr__(self) -> str:

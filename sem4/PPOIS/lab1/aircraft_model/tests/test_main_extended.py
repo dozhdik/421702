@@ -17,7 +17,7 @@ class TestSystemStateExtended:
     def test_is_passport_exists(self):
         state = SystemState()
         state.reset()
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         state.passengers["PASS1234"] = p
         assert state.is_passport_exists("PASS1234") is True
         assert state.is_passport_exists("NONE") is False
@@ -70,7 +70,7 @@ class TestFlightExtended:
     def test_is_passenger_on_flight(self):
         ac = Aircraft("Test", "RA-TEST", 100)
         flight = Flight("SU123", ac, "SVO", "LED", datetime.now())
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         flight.add_passenger(p)
         assert flight.is_passenger_on_flight("PASS1234") is True
         assert flight.is_passenger_on_flight("NONE") is False
@@ -152,7 +152,7 @@ class TestMenuTakeoffLanding:
         ac.add_crew_member(fa1)
         ac.add_crew_member(fa2)
 
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         p.register_for_flight()
         ac.add_passenger(p)
 

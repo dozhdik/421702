@@ -1,7 +1,7 @@
 """Тесты для модуля exceptions."""
 from aircraft_model import (
     ValidationError, FlightError, CapacityError, CrewError,
-    RegistrationError, ServiceError, TakeoffError, LandingError, RunwayError
+    RegistrationError, ServiceError, TakeoffError, LandingError
 )
 
 
@@ -41,7 +41,3 @@ class TestExceptions:
     def test_landing_error(self):
         e = LandingError("landing issue")
         assert "landing issue" in e.message
-
-    def test_runway_error(self):
-        e = RunwayError("runway issue")
-        assert "runway issue" in e.message

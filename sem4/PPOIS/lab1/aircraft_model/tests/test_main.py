@@ -55,14 +55,14 @@ class TestFlight:
     def test_add_passenger(self):
         ac = Aircraft("Test", "RA-TEST", 100)
         flight = Flight("SU123", ac, "SVO", "LED", datetime.now())
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         flight.add_passenger(p)
         assert flight.get_passenger_count() == 1
 
     def test_is_seat_taken(self):
         ac = Aircraft("Test", "RA-TEST", 100)
         flight = Flight("SU123", ac, "SVO", "LED", datetime.now())
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         flight.add_passenger(p)
         assert flight.is_seat_taken("12A") is True
         assert flight.is_seat_taken("12B") is False
@@ -243,7 +243,7 @@ class TestMenuInflightService:
     @patch('aircraft_model.main.safe_input')
     def test_service_provide_meal(self, mock_input, mock_state):
         ac = Aircraft("Test", "RA-TEST", 100)
-        p = Passenger("Test", "PASS1234", "TKT001", "12A")
+        p = Passenger("Test", "PASS1234", "12A")
         p.register_for_flight()
         ac.add_passenger(p)
 

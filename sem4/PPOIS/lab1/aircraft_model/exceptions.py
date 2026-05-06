@@ -40,13 +40,6 @@ class LandingError(FlightError):
         super().__init__(f"Landing error: {message}")
 
 
-class RunwayError(FlightError):
-    """Ошибка, связанная с ВПП."""
-
-    def __init__(self, message: str) -> None:
-        super().__init__(f"Runway error: {message}")
-
-
 class ServiceError(FlightError):
     """Ошибка бортового сервиса."""
 

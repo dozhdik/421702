@@ -4,34 +4,16 @@
 
 **Предметная область:** Воздушное транспортное средство и процессы его эксплуатации.
 
-**Цель работы:** Разработка ООП-модели авиационной системы, включающей сущности `Aircraft`, `Passenger`, `CrewMember`, `Runway`, `InFlightService`, `Ticket`, а также реализацию операций регистрации на рейс, взлёта/посадки, бортового обслуживания, планирования маршрутов и обеспечения безопасности.
+**Цель работы:** Разработка ООП-модели авиационной системы, включающей сущности `Aircraft`, `Passenger`, `CrewMember`, `InFlightService`, а также реализацию операций регистрации на рейс, взлёта/посадки, бортового обслуживания, планирования маршрутов и обеспечения безопасности.
 
 ---
 
-## Требования и установка
-
-### Системные требования
+## Требования
 
 | Компонент | Версия |
 |-----------|--------|
 | Python | 3.10+ |
 | pytest | 7.0+ |
-
-### Установка
-
-```bash
-# Клонирование репозитория
-git clone <repository-url>
-cd lab1
-
-# Создание виртуального окружения
-python3 -m venv venv
-source venv/bin/activate  # Linux/macOS
-# venv\Scripts\activate   # Windows
-
-# Запуск приложения
-python3 -m aircraft_model.main
-```
 
 ---
 
@@ -44,8 +26,6 @@ lab1/
 │   ├── aircraft.py           # Класс Aircraft (самолёт)
 │   ├── passenger.py          # Класс Passenger (пассажир)
 │   ├── crew_member.py        # Класс CrewMember (член экипажа)
-│   ├── runway.py             # Класс Runway (ВПП)
-│   ├── ticket.py             # Класс Ticket (билет)
 │   ├── flight_route.py       # Класс FlightRoute (маршрут)
 │   ├── in_flight_service.py  # Класс InFlightService (бортовой сервис)
 │   ├── enums.py              # Перечисления статусов и ролей
@@ -57,15 +37,12 @@ lab1/
 │       ├── test_aircraft.py
 │       ├── test_passenger.py
 │       ├── test_crew_member.py
-│       ├── test_runway.py
-│       ├── test_ticket.py
 │       ├── test_flight_route.py
 │       ├── test_in_flight_service.py
 │       ├── test_enums.py
 │       ├── test_exceptions.py
 │       └── test_main.py
-├── README.md                  # Данная документация
-└── PROJECT_CONTEXT.md         # Контекст проекта
+└── README.md                  # Данная документация
 ```
 
 ### Роль `__init__.py`
@@ -79,12 +56,6 @@ lab1/
 ---
 
 ## Использование (CLI-интерфейс)
-
-### Получение справки
-
-```bash
-python3 -m aircraft_model.main --help
-```
 
 ### Основные команды
 
@@ -173,35 +144,27 @@ python3 -m aircraft_model.main --help
 
 ```
 ┌─────────────────────┐         ┌─────────────────────┐
-│      Aircraft       │         │     Passenger        │
+│      Aircraft       │         │     Passenger       │
 ├─────────────────────┤         ├─────────────────────┤
-│ - tail_number       │         │ - passport_number    │
-│ - capacity          │  1..*   │ - seat_number        │
-│ - status            │────────>│ - is_registered      │
+│ - tail_number       │         │ - passport_number   │
+│ - capacity          │  1..*   │ - seat_number       │
+│ - status            │────────>│ - is_registered     │
 │ - passengers: list  │         └─────────────────────┘
 │ - crew: list        │
 │ - service: IFS      │         ┌─────────────────────┐
-└─────────┬───────────┘         │   CrewMember        │
+└─────────┬───────────┘         │   FlightRoute       │
           │                     ├─────────────────────┤
-          │ 1..*                 │ - role: CrewRole    │
-          ▼                     │ - license_number    │
-┌─────────────────────┐         │ - is_on_duty        │
-│    FlightRoute      │         └─────────────────────┘
+          │ 1..*                │ - departure         │
+          ▼                     │ - destination       │
+┌─────────────────────┐         │ - distance          │
+│    CrewMember       │         └─────────────────────┘
 ├─────────────────────┤
-│ - departure         │
-│ - destination       │         ┌─────────────────────┐
-│ - distance          │         │  InFlightService    │
+│ - role: CrewRole    │
+│ - license_number    │         ┌─────────────────────┐
+│ - is_on_duty        │         │  InFlightService    │
 └─────────────────────┘         ├─────────────────────┤
                                 │ - inventory         │
-┌─────────────────────┐         │ - service_limits   │
-│       Runway        │         └─────────────────────┘
-├─────────────────────┤
-│ - length            │
-│ - status            │         ┌─────────────────────┐
-│ - queue             │         │       Ticket        │
-└─────────────────────┘         ├─────────────────────┤
-                                │ - status            │
-                                │ - seat              │
+                                │ - service_limits    │
                                 └─────────────────────┘
 ```
 
@@ -212,10 +175,8 @@ python3 -m aircraft_model.main --help
 | `Aircraft` | Управление состоянием самолёта, экипажем, пассажирами; взлёт/посадка |
 | `Passenger` | Хранение данных пассажира, регистрация на рейс |
 | `CrewMember` | Роль, дежурство, выполнение обязанностей |
-| `Runway` | Управление очередью на взлёт/посадку |
 | `FlightRoute` | Параметры маршрута (расстояние, время) |
 | `InFlightService` | Учёт инвентаря, лимиты услуг |
-| `Ticket` | Жизненный цикл билета |
 
 #### Композиция vs Агрегация
 
@@ -233,6 +194,109 @@ class Aircraft:
     def add_passenger(self, passenger: Passenger) -> bool:
         self._passengers.append(passenger)  # ссылка, не создание
 ```
+
+### Детальное описание модулей
+
+#### aircraft.py — Класс Aircraft (Самолёт)
+
+Центральный класс системы, управляющий состоянием воздушного судна.
+
+**Ключевые атрибуты:**
+
+| Атрибут | Тип | Описание |
+|---------|-----|----------|
+| `model` | `str` | Модель самолёта |
+| `tail_number` | `str` | Бортовой номер (минимум 5 символов) |
+| `capacity` | `int` | Вместимость (1-850 мест) |
+| `status` | `AircraftStatus` | Текущий статус |
+| `current_airport` | `str` | Текущий аэропорт |
+| `_passengers` | `list[Passenger]` | Список пассажиров |
+| `_crew` | `list[CrewMember]` | Экипаж |
+| `_flight_route` | `FlightRoute` | Маршрут полёта |
+| `_service` | `InFlightService` | Бортовой сервис |
+
+**Основные методы:**
+
+| Метод | Описание |
+|-------|----------|
+| `add_passenger()` / `remove_passenger()` | Управление пассажирами |
+| `add_crew_member()` / `remove_crew_member()` | Управление экипажем |
+| `preflight_check()` | Предполётная проверка (экипаж, пассажиры, маршрут) |
+| `take_off()` / `land()` | Операции взлёта/посадки |
+| `reset_after_landing()` | Сброс состояния после рейса |
+
+**Минимальные требования к экипажу:**
+- 1 пилот (`PILOT`)
+- 2 бортпроводника (`FLIGHT_ATTENDANT`)
+
+#### passenger.py — Класс Passenger (Пассажир)
+
+**Атрибуты:**
+
+| Атрибут | Тип | Описание |
+|---------|-----|----------|
+| `full_name` | `str` | ФИО (минимум 3 символа) |
+| `passport_number` | `str` | Паспорт (6-12 символов) |
+| `seat_number` | `str` | Место (формат: "12A") |
+| `is_registered` | `bool` | Статус регистрации |
+
+**Методы:**
+- `assign_seat(seat)` — назначить место
+- `register_for_flight()` — регистрация на рейс
+- `cancel_registration()` — отмена регистрации
+
+#### crew_member.py — Класс CrewMember (Член экипажа)
+
+**Роли** (`CrewRole`): `PILOT`, `CO_PILOT`, `NAVIGATOR`, `FLIGHT_ATTENDANT`, `LEAD_ATTENDANT`, `ENGINEER`
+
+**Методы:**
+- `start_duty()` / `end_duty()` — начало/конец дежурства
+- `perform_duty(duty_type)` — выполнение обязанностей
+- `can_fly()` — проверка возможности полёта
+
+#### flight_route.py — Класс FlightRoute (Маршрут)
+
+**Константы:**
+- `AVERAGE_SPEED_KMH = 800.0` — средняя скорость
+- `AVERAGE_FUEL_CONSUMPTION = 3.5` л/км
+
+**Методы:**
+- `calculate_fuel()` — расчёт топлива (с 10% резервом)
+- `estimate_duration()` — расчёт времени полёта
+- `is_route_compatible(other)` — проверка совместимости маршрутов
+- `__add__()` — объединение маршрутов
+
+#### in_flight_service.py — Класс InFlightService (Бортовой сервис)
+
+**Типы услуг** (`ServiceType`): `MEAL`, `BEVERAGE`, `ASSISTANCE`, `WIFI`
+
+**Инвентарь по умолчанию:** 150 единиц каждого типа
+
+**Методы:**
+- `provide_meal(meal_type)` — предоставить питание
+- `provide_beverage(beverage_type)` — предоставить напиток
+- `provide_wifi(passenger_id)` — подключить Wi-Fi
+- `restock(service_type, quantity)` — пополнить запасы
+
+### Паттерны проектирования
+
+| Паттерн | Применение в проекте |
+|---------|---------------------|
+| **Инкапсуляция** | Приватные атрибуты с property-доступом |
+| **Валидация** | Статические методы `_validate_*` |
+| **Композиция** | `Aircraft` содержит `InFlightService` |
+| **Агрегация** | `Aircraft` содержит списки `Passenger`, `CrewMember` |
+| **Синглтон** | `SystemState` в CLI |
+| **Перегрузка операторов** | `FlightRoute.__add__()` |
+
+### Особенности реализации
+
+- Все строки нормализуются (`upper()`, `strip()`)
+- Копии списков в property для защиты внутреннего состояния
+- Логирование изменений статуса в `change_status()`
+- Автоматическое создание минимального экипажа при создании самолёта
+- Демо-данные для быстрого тестирования
+- Обработка `KeyboardInterrupt` в CLI
 
 ---
 
@@ -292,25 +356,25 @@ class CapacityError(FlightError): pass
 
 ```
                     ┌──────────────┐
-                    │  ON_GROUND   │<───────────────────────┐
-                    └──────┬───────┘                        │
-                           │ can_take_off()                  │
-                           ▼                                 │
-                    ┌──────────────┐                        │
+                    │  ON_GROUND   │<──────────────────────┐
+                    └──────┬───────┘                       │
+                           │ can_take_off()                │
+                           ▼                               │
+                    ┌──────────────┐                       │
     ┌───────────────│  IN_FLIGHT   │───────────────────────┤
-    │                └──────────────┘                       │
+    │               └──────────────┘                       │
     │                                                    land()
     │ reset_after_landing()
-    │                                                     │
+    │                                                      │
     │ ┌──────────────┐                                     │
     │ │   LANDING    │ ────────────────────────────────────┘
     │ └──────────────┘
     │
-    └──────────────────────────────────────┐
-                                         │
+    └─────────────────────────────────────┐
+                                          │
                            ┌──────────────▼───────────────┐
-                           │         BOARDING              │
-                           └───────────────────────────────┘
+                           │         BOARDING             │
+                           └──────────────────────────────┘
 ```
 
 #### Валидация переходов
@@ -343,7 +407,6 @@ Exception
             ├── RegistrationError    — ошибки регистрации
             ├── TakeoffError         — ошибки взлёта
             ├── LandingError         — ошибки посадки
-            ├── RunwayError          — ошибки ВПП
             ├── ServiceError         — ошибки сервиса
             ├── CrewError            — ошибки экипажа
             └── CapacityError        — превышение вместимости
@@ -360,13 +423,6 @@ def add_passenger(self, passenger: Passenger) -> bool:
         raise FlightError(f"Пассажир не зарегистрирован на рейс")
     self._passengers.append(passenger)
     return True
-
-# [runway.py:103-109]
-def request_takeoff(self, aircraft: Aircraft) -> bool:
-    if self._status == RunwayStatus.CLOSED:
-        raise RunwayError(f"Runway {self._runway_id} is closed")
-    if self._status == RunwayStatus.MAINTENANCE:
-        raise RunwayError(f"Runway {self._runway_id} is under maintenance")
 ```
 
 ---
@@ -385,25 +441,6 @@ def model(self) -> str:
 @property
 def status(self) -> AircraftStatus:
     return self._status
-```
-
-Класс `Ticket` реализует методы жизненного цикла:
-
-```python
-# [ticket.py:164-174]
-def confirm(self) -> bool:
-    """Подтвердить билет"""
-    if self._status != TicketStatus.BOOKED:
-        return False
-    self._status = TicketStatus.CONFIRMED
-    return True
-
-def use(self) -> bool:
-    """Пометить как использованный"""
-    if self._status not in (TicketStatus.BOOKED, TicketStatus.CONFIRMED):
-        raise FlightError(f"Cannot use ticket with status: {self._status.name}")
-    self._status = TicketStatus.USED
-    return True
 ```
 
 ---
@@ -430,14 +467,12 @@ python3 -m pytest aircraft_model/tests/test_aircraft.py -v
 | `test_aircraft.py` | 18 тестов | Валидация, свойства, пассажиры, экипаж, взлёт/посадка |
 | `test_passenger.py` | 12 тестов | Регистрация, отмена, места, валидация |
 | `test_crew_member.py` | 10 тестов | Дежурство, выполнение обязанностей |
-| `test_ticket.py` | 15 тестов | Жизненный цикл, валидация |
 | `test_flight_route.py` | 8 тестов | Валидация маршрута, свойства |
-| `test_runway.py` | 12 тестов | Очередь, запросы, статус |
 | `test_in_flight_service.py` | 10 тестов | Инвентарь, лимиты, услуги |
 | `test_exceptions.py` | 9 тестов | Иерархия исключений |
-| `test_enums.py` | 5 тестов | Значения перечислений |
+| `test_enums.py` | 4 теста | Значения перечислений |
 
-**Итого: 161 тест**
+**Итого: ~140 тестов**
 
 ### Примеры тестовых сценариев
 
@@ -467,22 +502,6 @@ def aircraft_ready_for_takeoff(aircraft_with_crew, registered_passenger, flight_
 
 ---
 
-## Соответствие требованиям лабораторной
-
-| Требование | Статус | Подтверждение |
-|------------|--------|---------------|
-| Python 3.10+ | ✅ | `python3 -m pytest` — Python 3.12.3 |
-| Аннотации типов | ✅ | Все классы и методы имеют type hints |
-| PEP8 | ✅ | Формат кода соответствует стандарту |
-| Кастомные исключения | ✅ | 10 классов в [`exceptions.py`](aircraft_model/exceptions.py) |
-| CLI (argparse/typer/click) | ✅ | Интерактивный CLI в [`main.py`](aircraft_model/main.py) |
-| pytest | ✅ | 161 тест, покрытие ~90% |
-| Структура пакета с `__init__.py` | ✅ | Явный `__all__`, версия |
-| GitHub | ✅ | Git-репозиторий инициализирован |
-| Markdown-документация | ✅ | Данный README.md |
-
----
-
 ## Ответы на контрольные вопросы
 
 ### 1. Основные принципы ООП
@@ -491,14 +510,14 @@ def aircraft_ready_for_takeoff(aircraft_with_crew, registered_passenger, flight_
 |---------|---------------------|
 | **Абстракция** | Классы моделируют сущности предметной области; скрыты детали реализации (валидация в private-методах `_validate_*`) |
 | **Инкапсуляция** | Данные защищены через `_` prefix (`_model`, `_passengers`); доступ через property; `__all__` ограничивает публичный API |
-| **Полиморфизм** | `TicketStatus`, `AircraftStatus` — разные enum со своими состояниями; методы `validate()` работают полиморфно для всех подклассов `FlightError` |
+| **Полиморфизм** | `ServiceType`, `AircraftStatus` — разные enum со своими состояниями; методы `validate()` работают полиморфно для всех подклассов `FlightError` |
 | **Модульность** | Пакет разделён на модули по ответственности; [`__init__.py`](aircraft_model/__init__.py) управляет экспортами |
 
 ### 2. Принципы SOLID
 
 | Принцип | Реализация |
 |---------|------------|
-| **S**ingle Responsibility | Каждый класс: `Aircraft` — только самолёт, `Runway` — только ВПП |
+| **S**ingle Responsibility | Каждый класс: `Aircraft` — только самолёт, `Passenger` — только пассажир |
 | **O**pen/Closed | `AircraftStatus` расширяется через `Enum.auto()`, не меняя код |
 | **L**iskov Substitution | `TakeoffError`, `LandingError` заменяют `FlightError` |
 | **I**nterface Segregation | Минимальные интерфейсы через property и методы |
@@ -514,8 +533,7 @@ def aircraft_ready_for_takeoff(aircraft_with_crew, registered_passenger, flight_
 
 В проекте реализована сериализация через:
 - **Property-доступ** для read-only атрибутов (защита от мутации)
-- **Методы жизненного цикла** объектов (`register_for_flight()`, `use()`, `confirm()`)
-- **Фабричный метод** `Ticket.issue()` для создания объектов
+- **Методы жизненного цикла** объектов (`register_for_flight()`)
 
 ### 5. Конечный автомат (FSM)
 
@@ -541,11 +559,7 @@ Validation:
 
 | Поле | Значение |
 |------|----------|
-| **Студент** | dozhdik |
-| **Группа** | PPOIS |
+| **Студент** | Дождиков Александр Игоревич |
+| **Группа** | 421702 |
 | **Дата** | 2026 |
-| **Репозиторий** | GitHub |
-
 ---
-
-*Документация сгенерирована на основе анализа исходного кода проекта.*

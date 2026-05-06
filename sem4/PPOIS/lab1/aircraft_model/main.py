@@ -171,7 +171,7 @@ class Flight:
 class SystemState:
     """Хранит состояние всех созданных объектов сессии."""
     
-    _instance: Optional["SystemState"] = None  # <-- ЭТА СТРОКА БЫЛА ПРОПУЩЕНА!
+    _instance: Optional["SystemState"] = None 
 
     def __new__(cls) -> "SystemState":
         if cls._instance is None:
@@ -727,7 +727,6 @@ def menu_register_passenger() -> None:
         passenger = Passenger(
             full_name=name,
             passport_number=passport,
-            ticket_number=f"TKT-{uuid.uuid4().hex[:8].upper()}",
             seat_number=seat,
         )
         passenger.register_for_flight()

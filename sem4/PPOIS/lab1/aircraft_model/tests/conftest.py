@@ -1,9 +1,8 @@
 """Фикстуры для тестов."""
 import pytest
-from datetime import datetime, timedelta
 from aircraft_model import (
     Aircraft, CrewMember, CrewRole, Passenger, FlightRoute,
-    InFlightService, Ticket, Runway, RunwayStatus, TicketStatus
+    InFlightService
 )
 
 
@@ -22,13 +21,13 @@ def crew_member():
 @pytest.fixture
 def passenger():
     """Создать тестового пассажира."""
-    return Passenger("Пётр Петров", "PASS1234", "TKT001", "12A")
+    return Passenger("Пётр Петров", "PASS1234", "12A")
 
 
 @pytest.fixture
 def registered_passenger():
     """Создать зарегистрированного пассажира."""
-    p = Passenger("Пётр Петров", "PASS1234", "TKT001", "12A")
+    p = Passenger("Пётр Петров", "PASS1234", "12A")
     p.register_for_flight()
     return p
 
@@ -43,18 +42,6 @@ def flight_route():
 def in_flight_service():
     """Создать тестовый сервис."""
     return InFlightService()
-
-
-@pytest.fixture
-def ticket():
-    """Создать тестовый билет."""
-    return Ticket("SU123", datetime.now() + timedelta(days=1), "12A", 5000.0, "PASS1234")
-
-
-@pytest.fixture
-def runway():
-    """Создать тестовую ВПП."""
-    return Runway("RWY01", 3000)
 
 
 @pytest.fixture

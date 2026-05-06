@@ -61,7 +61,7 @@ class TestAircraftPassengers:
     def test_add_over_capacity_fails(self, aircraft, registered_passenger):
         aircraft._capacity = 1
         aircraft.add_passenger(registered_passenger)
-        p2 = Passenger("Test User", "X12345", "T1", "1B")
+        p2 = Passenger("Test User", "X12345", "1B")
         p2.register_for_flight()
         with pytest.raises(CapacityError):
             aircraft.add_passenger(p2)

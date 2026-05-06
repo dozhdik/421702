@@ -1,6 +1,6 @@
 """Тесты для модуля enums."""
 from aircraft_model import (
-    AircraftStatus, CrewRole, TicketStatus, RunwayStatus, ServiceType
+    AircraftStatus, CrewRole, ServiceType
 )
 
 
@@ -17,11 +17,3 @@ class TestEnums:
 
     def test_service_type_count(self):
         assert len(list(ServiceType)) == 4
-
-    def test_ticket_status_values(self):
-        assert TicketStatus.BOOKED.name == "BOOKED"
-        assert TicketStatus.CONFIRMED.name == "CONFIRMED"
-
-    def test_runway_status_values(self):
-        assert RunwayStatus.FREE.name == "FREE"
-        assert RunwayStatus.OCCUPIED.name == "OCCUPIED"

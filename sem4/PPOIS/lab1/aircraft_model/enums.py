@@ -25,23 +25,6 @@ class CrewRole(Enum):
     ENGINEER = auto()
 
 
-class TicketStatus(Enum):
-    """Статусы билета."""
-    BOOKED = auto()
-    CONFIRMED = auto()
-    USED = auto()
-    CANCELLED = auto()
-    REFUNDED = auto()
-
-
-class RunwayStatus(Enum):
-    """Статусы взлётно-посадочной полосы."""
-    FREE = auto()
-    OCCUPIED = auto()
-    CLOSED = auto()
-    MAINTENANCE = auto()
-
-
 class ServiceType(Enum):
     """Типы бортовых услуг."""
     MEAL = auto()
