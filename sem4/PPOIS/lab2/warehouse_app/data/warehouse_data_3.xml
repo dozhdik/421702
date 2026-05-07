@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<warehouse_db>
+    <record>
+        <product_name>Дрель-шуруповерт Hilti SF 6H-A22</product_name>
+        <manufacturer_name>Hilti AG</manufacturer_name>
+        <unp_manufacturer>265432196</unp_manufacturer>
+        <quantity_in_stock>18</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Перфоратор SDS-plus Bosch GBH 4-32 DFR</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Угловая шлифмашина Makita GA9020</product_name>
+        <manufacturer_name>Makita Corporation</manufacturer_name>
+        <unp_manufacturer>187654321</unp_manufacturer>
+        <quantity_in_stock>24</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Циркулярная пила Festool TS 75 EBQ</product_name>
+        <manufacturer_name>Festool GmbH</manufacturer_name>
+        <unp_manufacturer>265432198</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Эксцентриковая шлифмашина Festool ETS 150/5 EQ</product_name>
+        <manufacturer_name>Festool GmbH</manufacturer_name>
+        <unp_manufacturer>265432198</unp_manufacturer>
+        <quantity_in_stock>13</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Гравер Dremel 4300-9/64</product_name>
+        <manufacturer_name>Dremel</manufacturer_name>
+        <unp_manufacturer>243210978</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Строительный степлер Bosch PTK 3.6 LI</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>31</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Гвоздезабивной пистолет DeWalt DCN692P2</product_name>
+        <manufacturer_name>DeWalt Industrial Tool</manufacturer_name>
+        <unp_manufacturer>176543210</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Пистолет для герметика Metabo DP 18 LTX BL</product_name>
+        <manufacturer_name>Metabo</manufacturer_name>
+        <unp_manufacturer>232109875</unp_manufacturer>
+        <quantity_in_stock>27</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Лазерный дальномер Leica DISTO D810 touch</product_name>
+        <manufacturer_name>Leica Geosystems</manufacturer_name>
+        <unp_manufacturer>210987652</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Уровень пузырьковый 1200 мм Stabila 96-2</product_name>
+        <manufacturer_name>Stabila</manufacturer_name>
+        <unp_manufacturer>243210977</unp_manufacturer>
+        <quantity_in_stock>42</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Рулетка измерительная Stanley FatMax 10 м</product_name>
+        <manufacturer_name>Stanley</manufacturer_name>
+        <unp_manufacturer>243210984</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Штангенциркуль цифровой Mitutoyo 500-196-30</product_name>
+        <manufacturer_name>Mitutoyo</manufacturer_name>
+        <unp_manufacturer>265432189</unp_manufacturer>
+        <quantity_in_stock>29</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Микрометр Mitutoyo 103-137</product_name>
+        <manufacturer_name>Mitutoyo</manufacturer_name>
+        <unp_manufacturer>265432189</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Индикатор часового типа Mitutoyo 2046S</product_name>
+        <manufacturer_name>Mitutoyo</manufacturer_name>
+        <unp_manufacturer>265432189</unp_manufacturer>
+        <quantity_in_stock>36</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Компрессор ременной Abac B6000/500 FT10</product_name>
+        <manufacturer_name>Abac</manufacturer_name>
+        <unp_manufacturer>254321089</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Сварочный полуавтомат Lincoln Electric Power MIG 256</product_name>
+        <manufacturer_name>Lincoln Electric</manufacturer_name>
+        <unp_manufacturer>265432188</unp_manufacturer>
+        <quantity_in_stock>4</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Плазморез Hypertherm Powermax 45 XP</product_name>
+        <manufacturer_name>Hypertherm</manufacturer_name>
+        <unp_manufacturer>254321088</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Генератор инверторный Yamaha EF2000iS</product_name>
+        <manufacturer_name>Yamaha Motor Co.</manufacturer_name>
+        <unp_manufacturer>243210976</unp_manufacturer>
+        <quantity_in_stock>11</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Мойка высокого давления Bosch GHP 5-65 X</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Пылесос строительный Metabo ASA 30 L PC</product_name>
+        <manufacturer_name>Metabo</manufacturer_name>
+        <unp_manufacturer>232109875</unp_manufacturer>
+        <quantity_in_stock>16</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Бензопила Husqvarna 572 XP</product_name>
+        <manufacturer_name>Husqvarna AB</manufacturer_name>
+        <unp_manufacturer>198765432</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Мотокоса Stihl FS 460 C-EM</product_name>
+        <manufacturer_name>Stihl</manufacturer_name>
+        <unp_manufacturer>187654320</unp_manufacturer>
+        <quantity_in_stock>14</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Садовый измельчитель Bosch AXT 25 D</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Опрыскиватель ранцевый Solo 425</product_name>
+        <manufacturer_name>Solo</manufacturer_name>
+        <unp_manufacturer>243210975</unp_manufacturer>
+        <quantity_in_stock>38</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Насос скважинный Grundfos SQ 3-65</product_name>
+        <manufacturer_name>Grundfos</manufacturer_name>
+        <unp_manufacturer>243210986</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Насос фекальный Grundfos AP 50.50.11.A1</product_name>
+        <manufacturer_name>Grundfos</manufacturer_name>
+        <unp_manufacturer>243210986</unp_manufacturer>
+        <quantity_in_stock>9</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Инфракрасный обогреватель Ballu BIH-APH-3.0</product_name>
+        <manufacturer_name>Ballu</manufacturer_name>
+        <unp_manufacturer>221098764</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Краскопульт электрический Bosch PFS 5000 E</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>22</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Растворомешалка Eibenstock EZR 1202 S</product_name>
+        <manufacturer_name>Eibenstock</manufacturer_name>
+        <unp_manufacturer>265432187</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Трамбовка вибрационная Wacker Neuson BS 50-4s</product_name>
+        <manufacturer_name>Wacker Neuson</manufacturer_name>
+        <unp_manufacturer>276543216</unp_manufacturer>
+        <quantity_in_stock>5</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Нарезчик швов Husqvarna FS 400 LV</product_name>
+        <manufacturer_name>Husqvarna AB</manufacturer_name>
+        <unp_manufacturer>198765432</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Перфоратор SDS-max Bosch GBH 8-45 DV</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>7</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Стойка для дрели Bosch PLS 300</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Стол монтажный складной Wolfcraft Master 700</product_name>
+        <manufacturer_name>Wolfcraft</manufacturer_name>
+        <unp_manufacturer>243210974</unp_manufacturer>
+        <quantity_in_stock>12</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Струбцина быстрозажимная Bessey EZS 50</product_name>
+        <manufacturer_name>Bessey</manufacturer_name>
+        <unp_manufacturer>254321087</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Набор бит Wera 867/4 TORX HF 15 предметов</product_name>
+        <manufacturer_name>Wera</manufacturer_name>
+        <unp_manufacturer>232109873</unp_manufacturer>
+        <quantity_in_stock>74</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Набор сверл по дереву 6-25 мм 8 шт Bosch</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Шлифлента 75х533 мм P120 для Makita (уп. 10 шт)</product_name>
+        <manufacturer_name>Klingspor</manufacturer_name>
+        <unp_manufacturer>254321094</unp_manufacturer>
+        <quantity_in_stock>160</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Шлифбумага на липучке 125 мм P180 (уп. 50 шт)</product_name>
+        <manufacturer_name>Klingspor</manufacturer_name>
+        <unp_manufacturer>254321094</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Диск пильный по алюминию 216х30х2.8 мм 80T CMT</product_name>
+        <manufacturer_name>CMT Orange Tools</manufacturer_name>
+        <unp_manufacturer>243210983</unp_manufacturer>
+        <quantity_in_stock>43</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Фреза концевая 8 мм твердосплавная 4-зубая</product_name>
+        <manufacturer_name>CMT Orange Tools</manufacturer_name>
+        <unp_manufacturer>243210983</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Паяльная станция Hakko FX-951</product_name>
+        <manufacturer_name>Hakko</manufacturer_name>
+        <unp_manufacturer>265432186</unp_manufacturer>
+        <quantity_in_stock>6</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Припой ПОС-61 1 мм 250 г</product_name>
+        <manufacturer_name>ООО МеталлПром</manufacturer_name>
+        <unp_manufacturer>276543214</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Флюс паяльный ФКСп 10 мл</product_name>
+        <manufacturer_name>ООО МеталлПром</manufacturer_name>
+        <unp_manufacturer>276543214</unp_manufacturer>
+        <quantity_in_stock>230</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Кабель-канал 40х25 мм белый (уп. 10 шт по 2 м)</product_name>
+        <manufacturer_name>DKC</manufacturer_name>
+        <unp_manufacturer>254321086</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Гофротруба ПВХ 20 мм серая (бухта 100 м)</product_name>
+        <manufacturer_name>DKC</manufacturer_name>
+        <unp_manufacturer>254321086</unp_manufacturer>
+        <quantity_in_stock>48</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+    <record>
+        <product_name>Монтажная пена Soudal Fix All 750 мл</product_name>
+        <manufacturer_name>Soudal</manufacturer_name>
+        <unp_manufacturer>243210973</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Уручская, 23</warehouse_address>
+    </record>
+    <record>
+        <product_name>Герметик силиконовый Soudal Silirub 2 600 мл белый</product_name>
+        <manufacturer_name>Soudal</manufacturer_name>
+        <unp_manufacturer>243210973</unp_manufacturer>
+        <quantity_in_stock>195</quantity_in_stock>
+        <warehouse_address>Брест, ул. Московская, 267</warehouse_address>
+    </record>
+    <record>
+        <product_name>Клей эпоксидный Loctite EA 9461 50 мл</product_name>
+        <manufacturer_name>Loctite</manufacturer_name>
+        <unp_manufacturer>265432185</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гомель, ул. Торговая, 5</warehouse_address>
+    </record>
+    <record>
+        <product_name>Смазка литиевая Liqui Moly LM 47 400 г</product_name>
+        <manufacturer_name>Liqui Moly</manufacturer_name>
+        <unp_manufacturer>254321085</unp_manufacturer>
+        <quantity_in_stock>112</quantity_in_stock>
+        <warehouse_address>Витебск, пр-т Фрунзе, 58</warehouse_address>
+    </record>
+    <record>
+        <product_name>Очиститель контактов Kontakt Chemie KONTAKT 60 400 мл</product_name>
+        <manufacturer_name>Kontakt Chemie</manufacturer_name>
+        <unp_manufacturer>243210972</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Гродно, ул. Горького, 82</warehouse_address>
+    </record>
+    <record>
+        <product_name>Защитные очки Bosch GO 2C</product_name>
+        <manufacturer_name>Bosch GmbH</manufacturer_name>
+        <unp_manufacturer>193567821</unp_manufacturer>
+        <quantity_in_stock>87</quantity_in_stock>
+        <warehouse_address>Могилев, ул. Первомайская, 71</warehouse_address>
+    </record>
+    <record>
+        <product_name>Наушники противошумные 3M Peltor X5A</product_name>
+        <manufacturer_name>3M</manufacturer_name>
+        <unp_manufacturer>298765429</unp_manufacturer>
+        <quantity_in_stock>нет на складе</quantity_in_stock>
+        <warehouse_address>Минск, ул. Промышленная, 10</warehouse_address>
+    </record>
+    <record>
+        <product_name>Перчатки защитные Ansell HyFlex 11-800 (пара)</product_name>
+        <manufacturer_name>Ansell</manufacturer_name>
+        <unp_manufacturer>265432184</unp_manufacturer>
+        <quantity_in_stock>340</quantity_in_stock>
+        <warehouse_address>Минск, пр-т Независимости, 117</warehouse_address>
+    </record>
+</warehouse_db>
