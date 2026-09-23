@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?><sqlb_project><db path="lab1_1.db" readonly="0" foreign_keys="1" case_sensitive_like="0" temp_store="0" wal_autocheckpoint="1000" synchronous="2"/><attached/><window><main_tabs open="structure browser pragmas query" current="3"/></window><tab_structure><column_width id="0" width="300"/><column_width id="1" width="0"/><column_width id="2" width="100"/><column_width id="3" width="1129"/><column_width id="4" width="0"/><expanded_item id="0" parent="1"/><expanded_item id="2" parent="0"/><expanded_item id="1" parent="1"/><expanded_item id="2" parent="1"/><expanded_item id="3" parent="1"/></tab_structure><tab_browse><table title="ПРЕПОДАВАТЕЛЬ_ПРЕПОДАЕТ_ПРЕДМЕТЫ_В_ГРУППАХ" custom_title="0" dock_id="1" table="4,80:mainПРЕПОДАВАТЕЛЬ_ПРЕПОДАЕТ_ПРЕДМЕТЫ_В_ГРУППАХ"/><dock_state state="000000ff00000000fd0000000100000002000003c100000317fc0100000001fb000000160064006f0063006b00420072006f00770073006500310100000000000003c10000012700ffffff000003140000000000000004000000040000000800000008fc00000000"/><default_encoding codec=""/><browse_table_settings><table schema="main" name="ПРЕДМЕТ" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="97"/><column index="2" value="119"/><column index="3" value="109"/><column index="4" value="96"/><column index="5" value="56"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="ПРЕПОДАВАТЕЛЬ" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort><column index="0" mode="0"/></sort><column_widths><column index="1" value="91"/><column index="2" value="61"/><column index="3" value="78"/><column index="4" value="78"/><column index="5" value="187"/><column index="6" value="121"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="ПРЕПОДАВАТЕЛЬ_ПРЕПОДАЕТ_ПРЕДМЕТЫ_В_ГРУППАХ" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="140"/><column index="2" value="153"/><column index="3" value="91"/><column index="4" value="107"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table><table schema="main" name="СТУДЕНЧЕСКАЯ_ГРУППА" show_row_id="0" encoding="" plot_x_axis="" unlock_view_pk="_rowid_" freeze_columns="0"><sort/><column_widths><column index="1" value="140"/><column index="2" value="106"/><column index="3" value="124"/><column index="4" value="187"/><column index="5" value="115"/></column_widths><filter_values/><conditional_formats/><row_id_formats/><display_formats/><hidden_columns/><plot_y_axes/><global_filter/></table></browse_table_settings></tab_browse><tab_sql><sql name="SQL 1*">CREATE TABLE ПРЕПОДАВАТЕЛЬ (
+    ЛичныйНомер TEXT PRIMARY KEY,
+    Фамилия TEXT,
+    Должность TEXT,
+    Кафедра TEXT,
+    Специальность TEXT,
+    ТелефонДомашний TEXT
+);
+
+CREATE TABLE ПРЕДМЕТ (
+    КодовыйНомер TEXT PRIMARY KEY,
+    НазваниеПредмета TEXT,
+    КоличествоЧасов INTEGER,
+    Специальность TEXT,
+    Семестр INTEGER
+);
+
+CREATE TABLE СТУДЕНЧЕСКАЯ_ГРУППА (
+    КодовыйНомерГруппы TEXT PRIMARY KEY,
+    НазваниеГруппы TEXT,
+    КоличествоЧеловек INTEGER,
+    Специальность TEXT,
+    ФамилияСтаросты TEXT
+);
+
+CREATE TABLE ПРЕПОДАВАТЕЛЬ_ПРЕПОДАЕТ_ПРЕДМЕТЫ_В_ГРУППАХ (
+    КодовыйНомерГруппы TEXT,
+    КодовыйНомерПредмета TEXT,
+    ЛичныйНомер TEXT,
+    НомерАудитории INTEGER
+);
+
+
+INSERT INTO ПРЕПОДАВАТЕЛЬ VALUES
+('221Л','Фролов','Доцент','ЭВМ','АСОИ, ЭВМ','487'),
+('222Л','Костин','Доцент','ЭВМ','ЭВМ','543'),
+('225Л','Бойко','Профессор','АСУ','АСОИ, ЭВМ','112'),
+('430Л','Глазов','Ассистент','ТФ','СД','421'),
+('110Л','Петров','Ассистент','Экономики','Международная экономика','324');
+
+INSERT INTO ПРЕДМЕТ VALUES
+('12П','Мини ЭВМ',36,'ЭВМ',1),
+('14П','ПЭВМ',72,'ЭВМ',2),
+('17П','СУБД ПК',48,'АСОИ',4),
+('18П','ВКСС',52,'АСОИ',6),
+('34П','Физика',30,'СД',6),
+('22П','Аудит',24,'Бухучета',3);
+
+INSERT INTO СТУДЕНЧЕСКАЯ_ГРУППА VALUES
+('8Г','Э-12',18,'ЭВМ','Иванова'),
+('7Г','Э-15',22,'ЭВМ','Сеткин'),
+('4Г','АС-9',24,'АСОИ','Балабанов'),
+('3Г','АС-8',20,'АСОИ','Чижов'),
+('17Г','С-14',29,'СД','Амросов'),
+('12Г','М-6',16,'Международная экономика','Трубин'),
+('10Г','Б-4',21,'Бухучет','Зязюткин');
+
+INSERT INTO ПРЕПОДАВАТЕЛЬ_ПРЕПОДАЕТ_ПРЕДМЕТЫ_В_ГРУППАХ VALUES
+('8Г','12П','222Л',112),('8Г','14П','221Л',220),('8Г','17П','222Л',112),
+('7Г','14П','221Л',220),('7Г','17П','222Л',241),('7Г','18П','225Л',210),
+('4Г','12П','222Л',112),('4Г','18П','225Л',210),
+('3Г','12П','222Л',112),('3Г','17П','221Л',241),('3Г','18П','225Л',210),
+('17Г','12П','222Л',112),('17Г','22П','110Л',220),('17Г','34П','430Л',118),
+('12Г','12П','222Л',112),('12Г','22П','110Л',210),
+('10Г','12П','222Л',210),('10Г','22П','110Л',210);</sql><sql name="query_04.sql*" filename="C:/421702/3-й курс/ПБЗ/lab1/lab1_1_queries/query_04.sql">-- Reference to file &quot;C:/421702/3-й курс/ПБЗ/lab1/lab1_1_queries/query_04.sql&quot; (not supported by this version) --</sql><current_tab id="1"/></tab_sql></sqlb_project>

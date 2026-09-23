@@ -1,0 +1,5 @@
+SELECT DISTINCT J.ИмяПР
+FROM J
+JOIN SPJ
+ON J.ПР = SPJ.ПР
+WHERE SPJ.П = 'П1'
