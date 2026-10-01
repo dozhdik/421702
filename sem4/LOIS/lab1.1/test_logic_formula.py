@@ -1,21 +1,3 @@
-r"""
-test_logic_formula.py
-=====================
-Tests for logic_formula module (LOIS lab work).
-
-Run:
-    pytest test_logic_formula.py -v
-or:
-    python -m pytest test_logic_formula.py -v
-
-New syntax rules:
-  - ALL operations require parentheses:
-      Negation:  (!A), (!(!A)), (!(A/\B))
-      Binary:    (A/\B), (A->(BVC))
-  - Without parentheses: only variables and constants (A, 1, 0)
-  - Spaces are forbidden
-"""
-
 import pytest
 from logic_formula import (
     Lexer, LexerError,
