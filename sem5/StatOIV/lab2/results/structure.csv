@@ -1,0 +1,8 @@
+﻿,тип,пропусков,уникальных
+species,object,0,3
+island,object,0,3
+culmen_length_mm,float64,2,164
+culmen_depth_mm,float64,2,80
+flipper_length_mm,float64,2,55
+body_mass_g,float64,2,94
+sex,object,10,3

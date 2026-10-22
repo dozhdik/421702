@@ -1,3 +1,18 @@
+"""
+Лабораторная работа 1. Основы статистических вычислений на Python
+
+Распределения: экспоненциальное (λ = 1) и Пуассона (λ = 3).
+Код идентичен ноутбуку Лаб_1_СОИВ.ipynb. Графики открываются по очереди
+(следующий появится после закрытия окна) и сохраняются в PNG рядом со скриптом.
+
+Зависимости: pip install numpy scipy matplotlib
+"""
+
+
+# ======================================================================
+# Лабораторная работа 1. Основы статистических вычислений на Python
+# ======================================================================
+
 import numpy as np
 import scipy.stats as stats
 import matplotlib.pyplot as plt
@@ -227,20 +242,5 @@ for n_check in [1, 101, 501, 991]:
     print(f'n = {n_check:>4}: SE эмп. = {se_emp[j]:.4f}, σ/√n = {se_th[j]:.4f}')
 
 # ======================================================================
-# 6. Дополнительно: центральная предельная теорема
+# 6. Выводы
 # ======================================================================
-
-fig, axes = plt.subplots(1, 4, figsize=(14, 3.4))
-M = 5000
-for ax, n in zip(axes, [1, 5, 30, 200]):
-    sample_means = np.random.exponential(scale=1/LAM_EXP, size=(M, n)).sum(axis=1) / n
-    ax.hist(sample_means, bins=40, density=True, alpha=0.6, color='slateblue')
-    g = np.linspace(sample_means.min(), sample_means.max(), 200)
-    ax.plot(g, stats.norm.pdf(g, MU, SIGMA/np.sqrt(n)), 'r-', lw=2)
-    ax.set_title(f'n = {n}, асимм. = {my_skew(sample_means):.2f}')
-    ax.set_xlabel('выборочное среднее')
-axes[0].set_ylabel('Плотность')
-fig.suptitle('ЦПТ: распределение среднего Exp(1) (гистограмма) и N(μ, σ²/n) (красная кривая)', y=1.03)
-plt.tight_layout()
-plt.savefig('fig5_clt.png', dpi=130, bbox_inches='tight')
-plt.show()

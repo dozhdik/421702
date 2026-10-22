@@ -1,5 +1,5 @@
 import sqlite3
-from database import get_connection
+from .database import get_connection
 
 class Organization:
     def __init__(self, organization_code: int, full_name: str, brief_name: str, address: str, bank_details: str, specialization: str, id: int | None = None):
@@ -33,7 +33,7 @@ class Organization:
         return cls.from_row(row) if row else None
 
     def validate(self):
-        if not isinstance(self.organization_code, int):
+        if type(self.organization_code) is not int or self.organization_code <= 0:
             raise ValueError("Incorrect data type!")
         for name in ("full_name", "brief_name", "address", "bank_details", "specialization"):
             value = getattr(self, name)
@@ -44,6 +44,7 @@ class Organization:
         if self._id is not None:
             raise ValueError("Organization is already exists!")
         self.validate()
+
         conn = get_connection()
         try:
             cur = conn.execute('''INSERT INTO Organization (organization_code, full_name, brief_name, address, bank_details, specialization)
@@ -57,12 +58,27 @@ class Organization:
         if self._id is None: 
             raise ValueError("There is missing id!")
         self.validate()
+
         conn = get_connection()
         try:
-            conn.execute('''UPDATE Organization SET organization_code = ?, full_name = ?, brief_name = ?, address = ?, bank_details = ?, specialization = ?
+            cur = conn.execute('''UPDATE Organization SET organization_code = ?, full_name = ?, brief_name = ?, address = ?, bank_details = ?, specialization = ?
                 WHERE id = ?''', (self.organization_code, self.full_name, self.brief_name, self.address, self.bank_details, self.specialization, self._id))
-            if conn.rowcount == 0:
+            if cur.rowcount == 0:
                 raise ValueError(f"Organization with this id: {self._id} doesn't exist!")
             conn.commit()
+        finally:
+            conn.close()
+
+    def delete(self):
+        if self._id is None:
+            raise ValueError("There is missing id!")
+        
+        conn = get_connection()
+        try:
+            cur = conn.execute('''DELETE FROM Organization WHERE id = ?''', (self._id,))
+            if cur.rowcount == 0:
+                raise ValueError(f"Organization with this id: {self._id} doesn't exist!")
+            conn.commit()
+            self._id = None
         finally:
             conn.close()

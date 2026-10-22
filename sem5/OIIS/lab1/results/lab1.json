@@ -1,0 +1,57 @@
+{
+  "cases": [
+    {
+      "name": "sin 5",
+      "peaks": [
+        5
+      ],
+      "amplitudes": [
+        1.0
+      ],
+      "error": 3.4081858345103617e-13,
+      "reconstruction": 6.695097328885536e-16,
+      "parseval": 0.0
+    },
+    {
+      "name": "sin 17",
+      "peaks": [
+        17
+      ],
+      "amplitudes": [
+        1.0
+      ],
+      "error": 2.912896997045099e-13,
+      "reconstruction": 6.025823991769122e-16,
+      "parseval": 0.0
+    },
+    {
+      "name": "cos 80",
+      "peaks": [
+        80
+      ],
+      "amplitudes": [
+        1.0
+      ],
+      "error": 2.0573369052703987e-13,
+      "reconstruction": 5.568915524043324e-16,
+      "parseval": 0.0
+    },
+    {
+      "name": "sum",
+      "peaks": [
+        5,
+        17,
+        80
+      ],
+      "amplitudes": [
+        1.0,
+        0.5999999999999996,
+        0.29999999999999993
+      ],
+      "error": 3.478908478232358e-13,
+      "reconstruction": 7.76208344599289e-16,
+      "parseval": 1.1368683772161603e-13
+    }
+  ],
+  "dft_error": 6.750740292339637e-14
+}
