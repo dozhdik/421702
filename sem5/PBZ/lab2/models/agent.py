@@ -2,17 +2,21 @@ import sqlite3
 from .database import get_connection
 
 class Agent:
-    def __init__(self, full_name: str, passport_details: str, id: int | None = None):
+    def __init__(self, full_name: str, passport_details: str, phone_number: str, insurance_company: str, id: int | None = None):
         self._id = id
         self.full_name = full_name
         self.passport_details = passport_details
+        self.phone_number = phone_number
+        self.insurance_company = insurance_company
 
     @classmethod
     def from_row(cls, row):
         return cls(
             id = row['id'],
             full_name = row['full_name'],
-            passport_details = row['passport_details']
+            passport_details = row['passport_details'],
+            phone_number = row['phone_number'],
+            insurance_company = row['insurance_company']
         )
 
     @classmethod
@@ -24,17 +28,8 @@ class Agent:
             conn.close()
         return cls.from_row(row) if row else None
 
-    @classmethod
-    def get_by_name(cls, full_name: str):
-        conn = get_connection()
-        try:
-            row = conn.execute("SELECT * FROM Agent WHERE full_name = ?", (full_name,)).fetchall()
-        finally:
-            conn.close()
-        return cls.from_row(row) if row else None
-
     def validate(self):
-        for name in ('full_name', 'passport_details'):
+        for name in ('full_name', 'passport_details', 'phone_number', 'insurance_company'):
             value = getattr(self, name)
             if not isinstance(value, str) or not value.strip():
                 raise ValueError(f"The variable {name} cannot be empty!")
@@ -46,7 +41,7 @@ class Agent:
 
         conn = get_connection()
         try:
-            cur = conn.execute("INSERT INTO Agent (full_name, passport_details) VALUES (?, ?)", (self.full_name, self.passport_details))
+            cur = conn.execute("INSERT INTO Agent (full_name, passport_details, phone_number, insurance_company) VALUES (?, ?, ?, ?)", (self.full_name, self.passport_details, self.phone_number, self.insurance_company))
             conn.commit()
             self._id = cur.lastrowid
         finally:
@@ -59,7 +54,7 @@ class Agent:
 
         conn = get_connection()
         try:
-            cur = conn.execute("UPDATE Agent SET full_name = ?, passport_details = ? WHERE id = ?", (self.full_name, self.passport_details, self._id))
+            cur = conn.execute("UPDATE Agent SET full_name = ?, passport_details = ?, phone_number = ?, insurance_company = ? WHERE id = ?", (self.full_name, self.passport_details, self.phone_number, self.insurance_company, self._id))
             if cur.rowcount == 0:
                 raise ValueError(f"Agent with this id: {self._id} doesn't exist!")
             conn.commit()

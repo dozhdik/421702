@@ -1,0 +1,19 @@
+{
+  "case": 5,
+  "bytes": 256,
+  "p_bits": 1024,
+  "q_bits": 1024,
+  "n_bits": 2048,
+  "blocks": 2,
+  "key_s": 1.7685281379963271,
+  "encrypt_s": 0.0005895619979128242,
+  "decrypt_s": 0.08511417500267271,
+  "sign_s": 0.042403840998304076,
+  "verify_s": 0.0003039270013687201,
+  "roundtrip": true,
+  "signature": true,
+  "modified_message_rejected": true,
+  "modified_signature_rejected": true,
+  "modified_ciphertext_rejected": true,
+  "sha256": "40aff2e9d2d8922e47afd4648e6967497158785fbd1da870e7110266bf944880"
+}

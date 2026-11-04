@@ -32,15 +32,6 @@ class Employee:
             conn.close()
         return cls.from_row(row) if row else None
 
-    @classmethod
-    def get_by_name(cls, full_name: str):
-        conn = get_connection()
-        try:
-            row = conn.execute("SELECT * FROM Employee WHERE full_name = ?", (full_name,)).fetchall()
-        finally:
-            conn.close()
-        return cls.from_row(row) if row else None
-
     def validate(self):
         for name in ('organization_id', 'age'):
             value = getattr(self, name)
