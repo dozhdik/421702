@@ -1,0 +1,1 @@
+/usr/bin/clang++ -g CMakeFiles/lab2s.dir/main.cpp.o CMakeFiles/lab2s.dir/airline.cpp.o -o lab2s 
