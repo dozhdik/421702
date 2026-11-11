@@ -1,5 +1,3 @@
-"""Тестовые данные для локальной базы страховых договоров."""
-
 from pathlib import Path
 
 from .database import get_connection, init_database
