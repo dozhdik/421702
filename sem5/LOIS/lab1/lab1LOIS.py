@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Лабораторная работа 3 — Прямой нечёткий логический вывод
 Вариант 5: треугольная норма произведения Хамахера
@@ -5,17 +6,6 @@
 
 Дисциплина: Логические основы интеллектуальных систем (ЛОИС)
 БГУИР, группа 421702
-
-Задача:
-Реализовать прямой нечёткий логический вывод, используя треугольную норму произведения Хамахера и соответствующую нечёткую импликацию.
-
-Требования к лабораторной работе:
-1. Интерфейс программы предполагает:
-а. Получение имени файла через стандартный ввод.
-б. чтение файла базы знаний, в котором записаны факты в виде нечётких предикатов и заданы правила в виде начётких импликаций в соответствии с грамматикой.
-2. Вычислить нечёткие импликации для каждого правила.
-3. В соответствии с правилом прямого нечёткого вывода для каждого записанного в исходном файле или выведенного в результате прямого нечёткого вывода факта и для каждого правила в исходном файле вывести новый факт, этот процесс продолжать до тех пор пока все выводимые факты не будут совпадать с уже выведенными или пока пользователь не прервет процесс прямого нечёткого вывода вводом соответствующей команды.
-4. Все выведенные прямым нечётким выводом факты вывести на стандартный вывод
 """
 
 import re
@@ -96,14 +86,14 @@ class FuzzySet:
 
 
 class Rule:
-    """Правило нечёткой импликации: Premise(var) ~> Conclusion(var)."""
+    """Правило нечёткой импликации: Premise(var) -> Conclusion(var)."""
 
     def __init__(self, premise: str, conclusion: str):
         self.premise = premise
         self.conclusion = conclusion
 
     def __repr__(self):
-        return f"{self.premise}~>{self.conclusion}"
+        return f"{self.premise}->{self.conclusion}"
 
 
 # ════════════════════════════════════════════════════════════════
@@ -115,57 +105,36 @@ def parse_knowledge_base(text: str) -> tuple[dict[str, FuzzySet], list[Rule]]:
     Разбор файла базы знаний.
 
     Факт:    Имя(перем)={<эл1,ст1>,<эл2,ст2>,...}
-    Правило: Имя1(перем)~>Имя2(перем)
+    Правило: Имя1(перем)->Имя2(перем)
     """
     facts: dict[str, FuzzySet] = {}
     rules: list[Rule] = []
 
-    number_pattern = r"[+-]?(?:\d+(?:\.\d+)?|\.\d+)"
-    pair_pattern = rf"<\s*(\w+)\s*,\s*({number_pattern})\s*>"
-    pairs_pattern = rf"{pair_pattern}(?:\s*,\s*{pair_pattern})*"
-
-    for line_number, raw in enumerate(text.splitlines(), start=1):
+    for raw in text.splitlines():
         line = raw.strip()
         if not line or line.startswith("//"):
             continue
 
         # --- факт ---
-        m = re.fullmatch(
-            r"([A-Za-z]\w*)\s*\(\s*\w+\s*\)\s*=\s*\{(.*)\}", line
-        )
+        m = re.match(r"([A-Za-z]\w*)\s*\(\s*\w+\s*\)\s*=\s*\{(.+)\}", line)
         if m:
             name = m.group(1)
-            body = m.group(2).strip()
-            if not re.fullmatch(pairs_pattern, body):
-                raise ValueError(
-                    f"строка {line_number}: некорректная запись факта: {line}"
-                )
-
-            pairs = re.findall(pair_pattern, body)
-            elems = []
-            for element, degree_text in pairs:
-                degree = float(degree_text)
-                if not 0.0 <= degree <= 1.0:
-                    raise ValueError(
-                        f"строка {line_number}: степень принадлежности "
-                        f"элемента «{element}» должна быть от 0 до 1, "
-                        f"получено {degree_text}"
-                    )
-                elems.append((element, degree))
-            facts[name] = FuzzySet(name, elems)
+            body = m.group(2)
+            pairs = re.findall(r"<\s*(\w+)\s*,\s*([01](?:\.\d+)?)\s*>", body)
+            if pairs:
+                elems = [(e, float(d)) for e, d in pairs]
+                facts[name] = FuzzySet(name, elems)
             continue
 
         # --- правило ---
-        m = re.fullmatch(
-            r"([A-Za-z]\w*)\s*\(\s*\w+\s*\)\s*(?:~>|->)\s*"
+        m = re.match(
+            r"([A-Za-z]\w*)\s*\(\s*\w+\s*\)\s*->\s*"
             r"([A-Za-z]\w*)\s*\(\s*\w+\s*\)",
             line,
         )
         if m:
             rules.append(Rule(m.group(1), m.group(2)))
             continue
-
-        raise ValueError(f"строка {line_number}: некорректная строка: {line}")
 
     return facts, rules
 
@@ -292,7 +261,7 @@ def run_inference(facts: dict[str, FuzzySet], rules: list[Rule]):
             }
         )
 
-        print(f"\n  {rule.premise}(x)~>{rule.conclusion}(y) :")
+        print(f"\n  {rule.premise}(x)->{rule.conclusion}(y) :")
         print(format_matrix(matrix, p.keys(), c.keys()))
 
     # ── Цикл вывода ──
@@ -369,11 +338,7 @@ def main():
         print(f"Ошибка: файл «{path}» не найден.")
         sys.exit(1)
 
-    try:
-        facts, rules = parse_knowledge_base(text)
-    except ValueError as exc:
-        print(f"Ошибка: {exc}")
-        sys.exit(1)
+    facts, rules = parse_knowledge_base(text)
 
     if not facts:
         print("Ошибка: в базе знаний не найдено ни одного факта.")
