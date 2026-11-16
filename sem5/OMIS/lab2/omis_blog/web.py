@@ -95,26 +95,64 @@ class WebApp:
         self.secure_cookie = environ.get("wsgi.url_scheme") == "https"
         self._session(environ)
         body: str | bytes
+        data: dict[str, str] = {}
+        csrf_valid = False
         try:
             if method == "POST":
                 data, files = form_data(environ)
                 if not self.session or data.get("csrf") != self.session.authorization_token:
                     raise d.PermissionDenied("Неверный токен формы")
+                csrf_valid = True
                 status, body, headers = self._post(path, data, files)
             else:
                 status, body, headers = self._get(path)
         except d.PermissionDenied as exc:
-            status, body, headers = "403 Forbidden", self._page("Нет доступа", f'<p role="alert">{escape_html(error_message(str(exc)))}</p>'), []
+            status, body, headers = self._form_error(path, data, exc, "403 Forbidden") if csrf_valid else ("403 Forbidden", self._page("Нет доступа", f'<p role="alert">{escape_html(error_message(str(exc)))}</p>'), [])
         except d.NotFound as exc:
-            status, body, headers = "404 Not Found", self._page("Не найдено", f"<p>{escape_html(exc)}</p>"), []
+            status, body, headers = self._form_error(path, data, exc, "404 Not Found") if csrf_valid else ("404 Not Found", self._page("Не найдено", f"<p>{escape_html(exc)}</p>"), [])
         except (d.DomainException, sqlite3.IntegrityError, ValueError) as exc:
-            status, body, headers = "400 Bad Request", self._page("Ошибка", f'<p role="alert">{escape_html(error_message(str(exc)))}</p>'), []
+            status, body, headers = self._form_error(path, data, exc, "400 Bad Request") if csrf_valid else ("400 Bad Request", self._page("Ошибка", f'<p role="alert">{escape_html(error_message(str(exc)))}</p>'), [])
         if self.cookie:
             headers.append(("Set-Cookie", self.cookie))
         if not any(k.lower() == "content-type" for k, _ in headers):
             headers.append(("Content-Type", "text/html; charset=utf-8"))
         start_response(status, headers)
         return [body if isinstance(body, bytes) else body.encode("utf-8")]
+
+    def _form_error(self, path: str, data: dict[str, str], exc: Exception,
+                    status: str) -> tuple[str, str, list[tuple[str, str]]]:
+        message = error_message(str(exc))
+        alert = f'<p class="form-error" role="alert">{escape_html(message)}</p>'
+        if path in ("/login", "/register"):
+            title = "Вход" if path == "/login" else "Регистрация"
+            return status, self._page(title, self._auth_form(path, data, alert)), []
+        if path == "/article/save" and data.get("action") != "autosave":
+            try:
+                self._require("article.write")
+                return status, self._page("Редактор статьи", self._editor(data.get("id") or "new", data, alert)), []
+            except (d.DomainException, ValueError):
+                pass
+        if path.startswith("/moderation/") and has_permission(self.db, self.account, "article.moderate"):
+            self.params["filter"] = "complaints" if "/complaint/" in path else "articles"
+            return status, self._page("Кабинет редактора", alert + self._moderation(data)), []
+        if path.startswith("/admin/") and has_permission(self.db, self.account, "admin"):
+            return status, self._page("Администрирование", alert + self._admin(data, path)), []
+        return status, self._page("Ошибка", alert), []
+
+    def _auth_form(self, path: str, data: dict[str, str], alert: str = "") -> str:
+        login = escape_html(data.get("login", ""))
+        if path == "/login":
+            return (f'<form class="auth-form" method="post" action="/login">{self._csrf()}{alert}'
+                    f'<label>Логин <input name="login" value="{login}" autocomplete="username" required></label>'
+                    '<label>Пароль <input type="password" name="password" autocomplete="current-password" required></label>'
+                    '<button class="primary">Войти</button><p>Нет учётной записи? <a href="/register">Зарегистрироваться</a></p></form>')
+        name = escape_html(data.get("full_name", ""))
+        return (f'<form class="auth-form" method="post" action="/register">{self._csrf()}{alert}'
+                f'<label>ФИО <input name="full_name" value="{name}" maxlength="120" autocomplete="name" required></label>'
+                f'<label>Логин <input name="login" value="{login}" minlength="3" maxlength="40" autocomplete="username" required></label>'
+                '<label>Пароль <input type="password" name="password" minlength="10" maxlength="128" autocomplete="new-password" required></label>'
+                '<label>Повторите пароль <input type="password" name="confirmation" minlength="10" maxlength="128" autocomplete="new-password" required></label>'
+                '<button class="primary">Создать аккаунт</button><p>Уже есть аккаунт? <a href="/login">Войти</a></p></form>')
 
     def _session(self, environ: dict) -> None:
         cookie = environ.get("HTTP_COOKIE", "")
@@ -231,19 +269,12 @@ class WebApp:
         return "303 See Other", "", [("Location", path)]
 
     def _get(self, path: str) -> tuple[str, str | bytes, list[tuple[str, str]]]:
+        if path == "/assets/editor.js":
+            return "200 OK", Path(__file__).with_name("editor.js").read_bytes(), [("Content-Type", "application/javascript; charset=utf-8")]
         if path == "/assets/site.css":
             return "200 OK", Path(__file__).with_name("site.css").read_bytes(), [("Content-Type", "text/css; charset=utf-8")]
-        if path == "/login":
-            body = f'<form class="auth-form" method="post" action="/login">{self._csrf()}<label>Логин <input name="login" autocomplete="username" required></label><label>Пароль <input type="password" name="password" autocomplete="current-password" required></label><button class="primary">Войти</button><p>Нет учётной записи? <a href="/register">Зарегистрироваться</a></p></form>'
-            return "200 OK", self._page("Вход", body), []
-        if path == "/register":
-            body = (f'<form class="auth-form" method="post" action="/register">{self._csrf()}'
-                    '<label>ФИО <input name="full_name" maxlength="120" autocomplete="name" required></label>'
-                    '<label>Логин <input name="login" minlength="3" maxlength="40" autocomplete="username" required></label>'
-                    '<label>Пароль <input type="password" name="password" minlength="10" maxlength="128" autocomplete="new-password" required></label>'
-                    '<label>Повторите пароль <input type="password" name="confirmation" minlength="10" maxlength="128" autocomplete="new-password" required></label>'
-                    '<button class="primary">Создать аккаунт</button><p>Уже есть аккаунт? <a href="/login">Войти</a></p></form>')
-            return "200 OK", self._page("Регистрация", body), []
+        if path in ("/login", "/register"):
+            return "200 OK", self._page("Вход" if path == "/login" else "Регистрация", self._auth_form(path, {})), []
         if path == "/":
             return "200 OK", self._page("Корпоративный блог", self._feed(),
                                         "Новости, идеи и опыт нашей команды"), []
@@ -497,7 +528,7 @@ class WebApp:
         profiles = self.db.list_entities(cls, 'user_id=?', (self.account.user_id,))
         return profiles[0] if profiles else None
 
-    def _editor(self, article_id: str) -> str:
+    def _editor(self, article_id: str, data: dict[str, str] | None = None, alert: str = "") -> str:
         author = self._profile(d.ContentAuthor)
         if author is None:
             raise d.PermissionDenied("Нет профиля автора")
@@ -510,14 +541,25 @@ class WebApp:
                         (d.ArticleStatus.DRAFT, d.ArticleStatus.NEEDS_REVISION)):
             raise d.PermissionDenied("Редактировать можно только свой черновик")
         article = article or d.Article()
+        if data is not None:
+            article.title = data.get("title", "")
+            article.content = data.get("content", "")
+            article.category_id = data.get("rubric", "")
         rubric_options = '<option value="">Выберите рубрику</option>' + "".join(
             f'<option value="{escape_html(r.category_id)}" {"selected" if r.category_id == article.category_id else ""}>{escape_html(r.name)}</option>'
             for r in self.db.list_entities(d.Category))
+        if article.category_id and not self.db.get(d.Category, article.category_id):
+            rubric_options += (f'<option value="{escape_html(article.category_id)}" selected>'
+                               'Недоступная рубрика</option>')
         tags = ", ".join(t.keyword for t in self.db.get_article_tags(article.article_id)) if article_id != "new" else ""
         style = self.db.list_entities(d.FormattingOptions, 'article_id=?', (article.article_id,))
         font = style[0].font if style else "system"
         preview = style[0].has_preview if style else True
-        body = (f'<form id="editor" method="post" action="/article/save" enctype="multipart/form-data">{self._csrf()}'
+        if data is not None:
+            tags = data.get("tags", "")
+            font = data.get("font", "system")
+            preview = data.get("preview") == "on"
+        body = (f'<form id="editor" method="post" action="/article/save" enctype="multipart/form-data">{self._csrf()}{alert}'
                 f'<input type="hidden" name="id" value="{escape_html(article_id if article_id != "new" else "")}">'
                 f'<label>Заголовок<input name="title" value="{escape_html(article.title)}"></label>'
                 f'<label>Содержание<textarea name="content">{escape_html(article.content)}</textarea></label>'
@@ -538,21 +580,19 @@ class WebApp:
                          f'{self._csrf()}<button>Удалить вложение</button></form></p>')
             for note in self.db.list_entities(d.EditorRemark, 'article_id=?', (article.article_id,)):
                 body += f'<article><strong>Замечание редактора:</strong> {escape_html(note.remark_text)}</article>'
-        body += ("<script>let dirty=false;const editorForm=document.querySelector('#editor');"
-                 "editorForm.addEventListener('input',()=>dirty=true);"
-                 "setInterval(async()=>{if(!dirty)return;const formData=new FormData(editorForm);formData.set('action','autosave');formData.delete('media');"
-                 "try{const response=await fetch('/article/save',{method:'POST',body:formData});"
-                 "document.querySelector('#autosave').textContent=response.ok?'Автосохранено':'Ошибка автосохранения';"
-                 "if(response.ok){dirty=false;const articleId=response.headers.get('X-Article-ID');"
-                 "if(articleId){editorForm.querySelector('[name=id]').value=articleId;history.replaceState(null,'','/editor/'+articleId);}}}"
-                 "catch(error){document.querySelector('#autosave').textContent='Ошибка автосохранения';}},30000);</script>")
+        body += '<script src="/assets/editor.js"></script>'
         self.app.views[1].display_draft(article.content)
         return body
 
-    def _moderation(self) -> str:
+    def _moderation(self, data: dict[str, str] | None = None) -> str:
         selected = self.params.get("filter", "all")
         self.app.views[2].display_queue(selected)
-        body = '<nav class="filter-nav" aria-label="Разделы модерации">' + ''.join(
+        notices = {'published': 'Статья опубликована', 'returned': 'Возвращена на доработку',
+                   'priority': 'Приоритет обновлён', 'confirmed': 'Жалоба подтверждена',
+                   'dismissed': 'Жалоба отклонена'}
+        notice = notices.get(self.params.get('result', ''), '')
+        body = (f'<p role="status">{escape_html(notice)}</p>' if notice else '')
+        body += '<nav class="filter-nav" aria-label="Разделы модерации">' + ''.join(
             f'<a href="/moderation?filter={value}" class="{"selected" if selected == value else ""}">{label}</a>'
             for value, label in (("all", "Всё"), ("articles", "Статьи"), ("complaints", "Жалобы"))
         ) + '</nav>'
@@ -578,7 +618,7 @@ class WebApp:
                          f'<label>Приоритет <input type="number" min="0" max="10" name="priority" value="{ticket.priority}"></label>'
                          '<button>Установить приоритет</button></form>'
                          f'<form method="post" action="/moderation/article/{escape_html(article.article_id)}">{self._csrf()}'
-                         '<label>Замечание<textarea name="note"></textarea></label>'
+                         f'<label>Замечание<textarea name="note">{escape_html(data.get("note", "") if data and self.current_path.endswith(article.article_id) else "")}</textarea></label>'
                          '<button name="decision" value="reject">Вернуть на доработку</button> '
                          '<button class="primary" name="decision" value="approve">Одобрить и опубликовать</button></form></article>')
         if selected in ("all", "complaints"):
@@ -597,32 +637,39 @@ class WebApp:
                          f'<form method="post" action="/moderation/complaint/{escape_html(comment_id)}">{self._csrf()}'
                          '<button name="decision" value="confirm">Подтвердить удаление</button> '
                          '<button name="decision" value="dismiss">Отклонить жалобу и восстановить</button></form></article>')
+        body += '''<script>document.querySelectorAll('.management-card form').forEach(form => form.addEventListener('submit', () => { setTimeout(() => form.querySelectorAll('button').forEach(button => button.disabled = true), 0); }));</script>'''
         return body
 
-    def _admin(self) -> str:
-        body = '<h2>Рубрики</h2>'
+    def _admin(self, data: dict[str, str] | None = None, error_path: str = "") -> str:
+        notice = '<p role="status">Изменения сохранены.</p>' if self.params.get('result') == 'saved' else ''
+        body = notice + '<nav class="filter-nav" aria-label="Разделы администрирования"><a href="#categories">Рубрики</a><a href="#users">Пользователи и роли</a><a href="#permissions">Права доступа</a><a href="#reports">Отчёты</a></nav><section id="categories"><h2>Рубрики</h2>'
         for rubric in self.db.list_entities(d.Category):
+            values = data if data and error_path == '/admin/rubric' and data.get('id') == rubric.category_id else {}
             body += (f'<form method="post" action="/admin/rubric">{self._csrf()}'
                      f'<input type="hidden" name="id" value="{escape_html(rubric.category_id)}">'
-                     f'<input name="name" value="{escape_html(rubric.name)}" required> '
-                     f'<input name="description" value="{escape_html(rubric.description)}"> '
+                     f'<label>Название<input name="name" value="{escape_html(values.get("name", rubric.name))}" required></label> '
+                     f'<label>Описание<input name="description" value="{escape_html(values.get("description", rubric.description))}"></label> '
                      '<button name="action" value="save">Сохранить</button> ')
             if not self.db.list_entities(d.Article, 'category_id=?', (rubric.category_id,)):
-                body += '<button name="action" value="delete">Удалить</button>'
+                body += '<button name="action" value="delete" onclick="return confirm(&quot;Удалить рубрику?&quot;)">Удалить</button>'
             body += '</form>'
+        new_values = data if data and error_path == '/admin/rubric' and not data.get('id') else {}
         body += (f'<form method="post" action="/admin/rubric">{self._csrf()}'
-                 '<input name="name" placeholder="Новая рубрика" required> '
-                 '<input name="description" placeholder="Описание"><button name="action" value="save">Добавить</button></form>')
+                 f'<label>Новая рубрика<input name="name" value="{escape_html(new_values.get("name", ""))}" required></label>'
+                 f'<label>Описание<input name="description" value="{escape_html(new_values.get("description", ""))}"></label>'
+                 '<button name="action" value="save">Добавить</button></form>')
         roles = self.db.list_entities(d.Role)
         options = "".join(f'<option value="{escape_html(r.role_id)}">{escape_html(role_label(r.role_name))}</option>' for r in roles)
-        body += '<h2>Пользователи и роли</h2>'
+        body += '</section><section id="users"><h2>Пользователи и роли</h2><div class="table-scroll"><table><thead><tr><th>Логин</th><th>Текущая роль</th><th>Действие</th></tr></thead><tbody>'
         for account in self.db.list_entities(d.UserAccount):
-            body += (f'<form method="post" action="/admin/role">{self._csrf()}'
-                     f'{escape_html(account.login)} <input type="hidden" name="account" value="{escape_html(account.account_id)}">'
-                     '<select name="role">' + "".join(
+            current_role = next((role_label(r.role_name) for r in roles if r.role_id == account.role_id), "Не назначена")
+            body += (f'<tr><td>{escape_html(account.login)}</td><td>{escape_html(current_role)}</td><td>'
+                     f'<form method="post" action="/admin/role">{self._csrf()}'
+                     f'<input type="hidden" name="account" value="{escape_html(account.account_id)}">'
+                     f'<label>Новая роль для {escape_html(account.login)}<select name="role">' + "".join(
                          f'<option value="{escape_html(r.role_id)}" {"selected" if r.role_id == account.role_id else ""}>{escape_html(role_label(r.role_name))}</option>'
-                         for r in roles) + '</select><button>Назначить роль</button></form>')
-        body += '<h2>Права ролей</h2>'
+                         for r in roles) + '</select></label><button onclick="return confirm(&quot;Изменить роль пользователя?&quot;)">Назначить роль</button></form></td></tr>')
+        body += '</tbody></table></div></section><section id="permissions"><h2>Права доступа</h2>'
         for role_obj in roles:
             rights = self.db.list_entities(d.AccessPermission, 'role_id=?', (role_obj.role_id,))
             body += f'<p>{escape_html(role_label(role_obj.role_name))}: {escape_html(", ".join(r.operation_code for r in rights))}</p>'
@@ -630,18 +677,18 @@ class WebApp:
                 body += (f'<form method="post" action="/admin/permission" class="inline">{self._csrf()}'
                          f'<input type="hidden" name="role" value="{escape_html(role_obj.role_id)}">'
                          f'<input type="hidden" name="code" value="{escape_html(right.operation_code)}">'
-                         f'<button name="action" value="remove">Убрать {escape_html(right.operation_code)}</button></form> ')
+                         f'<button onclick="return confirm(&quot;Удалить право доступа?&quot;)" name="action" value="remove">Убрать {escape_html(right.operation_code)}</button></form> ')
         body += (f'<form method="post" action="/admin/permission">{self._csrf()}'
-                 f'<select name="role">{options}</select><input name="code" placeholder="Код операции" required>'
+                 f'<label>Роль<select name="role">{options}</select></label><label>Код операции<input name="code" value="{escape_html(data.get("code", "") if data and error_path == "/admin/permission" else "")}" required></label>'
                  '<button name="action" value="add">Добавить право</button></form>')
-        body += (f'<h2>Отчётность</h2><form method="post" action="/admin/report">{self._csrf()}'
+        body += (f'</section><section id="reports"><h2>Отчёты</h2><form method="post" action="/admin/report">{self._csrf()}'
                  '<label>Начало периода<input type="date" name="start" required></label>'
                  '<label>Конец периода<input type="date" name="end" required></label><button>Сформировать</button></form>')
         for report in self.reports.get_reports():
             body += (f'<p>{escape_html(report.period)}: публикаций {report.publication_count}, '
                      f'комментариев {report.comment_count}, реакций {report.reaction_count}, '
                      f'охват {report.reach_metric:g}</p>')
-        return body
+        return body + '</section>'
 
     def _media(self, media_id: str) -> tuple[str, bytes, list[tuple[str, str]]]:
         media = self.db.get(d.MediaAttachment, media_id)
@@ -723,13 +770,16 @@ class WebApp:
             editor = self._profile(d.Editor)
             if editor is None:
                 raise d.PermissionDenied("Нет профиля редактора")
+            tickets = self.db.list_entities(d.ModerationQueueEntry, 'article_id=? AND processed_at IS NULL', (article_id,))
+            if not tickets:
+                raise d.NotFound("Заявка отсутствует или уже обработана")
             if data.get("decision") == "approve":
                 self.publications.publish_material(article_id, editor.editor_id)
             elif data.get("decision") == "reject":
                 self.publications.return_for_revision(article_id, editor.editor_id, data.get("note", ""))
             else:
                 raise d.DomainException("Неизвестное решение")
-            return self._redirect("/moderation")
+            return self._redirect("/moderation?filter=articles&result=" + ("published" if data.get("decision") == "approve" else "returned"))
         if path.startswith("/moderation/priority/"):
             self._require("article.moderate")
             ticket_id = path.split("/")[3]
@@ -744,14 +794,14 @@ class WebApp:
                 raise d.DomainException("Приоритет от 0 до 10")
             ticket.priority = priority
             self.db.save(ticket)
-            return self._redirect("/moderation")
+            return self._redirect("/moderation?filter=articles&result=priority")
         if path.startswith("/moderation/complaint/"):
             self._require("article.moderate")
             decision = data.get("decision", "")
             if decision is None:
                 raise d.DomainException("Неизвестное решение")
             self.moderation.apply_decision(decision, path.split("/")[3])
-            return self._redirect("/moderation")
+            return self._redirect("/moderation?filter=complaints&result=" + ("confirmed" if decision == "confirm" else "dismissed"))
         if path.startswith("/admin/"):
             self._require("admin")
             return self._admin_post(path, data)
@@ -784,6 +834,8 @@ class WebApp:
         if article.category_id and not self.db.get(d.Category, article.category_id):
             raise d.DomainException("Рубрика не существует")
         article.classified_at = d.utc_now() if article.category_id else None
+        if data.get("action") == "submit" and not article.ready_for_moderation():
+            raise d.DomainException("article_missing_required_fields")
         self.db.save(article)
         tags = []
         for name in {x.strip() for x in data.get("tags", "").split(",") if x.strip()}:
@@ -923,7 +975,7 @@ class WebApp:
             self.db.save(report)
         else:
             raise d.NotFound(path)
-        return self._redirect("/admin")
+        return self._redirect("/admin?result=saved")
 
     def _ensure_profiles(self, account: d.UserAccount) -> None:
         user = self.db.get(d.User, account.user_id)

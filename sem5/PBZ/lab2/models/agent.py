@@ -1,7 +1,11 @@
 import sqlite3
-from .database import get_connection
+from .database import get_connection, transaction, records
 
 class Agent:
+    @staticmethod
+    def list_all():
+        return records("SELECT * FROM Agent ORDER BY id")
+
     def __init__(self, full_name: str, passport_details: str, phone_number: str, insurance_company: str, id: int | None = None):
         self._id = id
         self.full_name = full_name
@@ -39,27 +43,23 @@ class Agent:
             raise ValueError("Agent is already exists!")
         self.validate()
 
-        conn = get_connection()
-        try:
+        with transaction() as conn:
+            if conn.execute("SELECT 1 FROM Agent WHERE passport_details=?", (self.passport_details,)).fetchone():
+                raise ValueError("Агент с такими паспортными данными уже существует")
             cur = conn.execute("INSERT INTO Agent (full_name, passport_details, phone_number, insurance_company) VALUES (?, ?, ?, ?)", (self.full_name, self.passport_details, self.phone_number, self.insurance_company))
-            conn.commit()
             self._id = cur.lastrowid
-        finally:
-            conn.close()
 
     def update(self):
         if self._id is None:
             raise ValueError("There is missing id!")
         self.validate()
 
-        conn = get_connection()
-        try:
+        with transaction() as conn:
+            if conn.execute("SELECT 1 FROM Agent WHERE passport_details=? AND id!=?", (self.passport_details, self._id)).fetchone():
+                raise ValueError("Агент с такими паспортными данными уже существует")
             cur = conn.execute("UPDATE Agent SET full_name = ?, passport_details = ?, phone_number = ?, insurance_company = ? WHERE id = ?", (self.full_name, self.passport_details, self.phone_number, self.insurance_company, self._id))
             if cur.rowcount == 0:
                 raise ValueError(f"Agent with this id: {self._id} doesn't exist!")
-            conn.commit()
-        finally:
-            conn.close()
 
     def delete(self):
         if self._id is None:

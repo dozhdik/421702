@@ -1,5 +1,6 @@
 import sqlite3
 from .database import get_connection
+from decimal import Decimal, InvalidOperation
 
 class Payout:
     def __init__(self, contract_id: int, risk_category: str, payout_amount: float | int, id: int | None = None):
@@ -31,14 +32,20 @@ class Payout:
         return cls.from_row(row) if row else None
 
     def validate(self):
-        if not isinstance(self._contract_id, int) or self._contract_id <= 0:
+        if type(self._contract_id) is not int or self._contract_id <= 0:
             raise ValueError("Incorrect data type")
 
         if not isinstance(self.risk_category, str) or not self.risk_category.strip():
             raise ValueError("Incorrect data type")
 
-        if not isinstance(self.payout_amount, (float, int)) or self.payout_amount <= 0:
-            raise ValueError("Incorrect data type")
+        try:
+            if isinstance(self.payout_amount, bool):
+                raise ValueError()
+            amount = Decimal(str(self.payout_amount))
+            if not amount.is_finite() or amount < 0 or amount.as_tuple().exponent < -2:
+                raise ValueError()
+        except (InvalidOperation, ValueError):
+            raise ValueError("Incorrect payout amount") from None
 
     def add(self):
         if self._id is not None:
@@ -83,3 +90,15 @@ class Payout:
             self._id = None 
         finally:
             conn.close()
+
+
+def money(value):
+    try:
+        if isinstance(value, bool):
+            raise ValueError()
+        amount = Decimal(str(value))
+        if not amount.is_finite() or amount < 0 or amount.as_tuple().exponent < -2:
+            raise ValueError()
+        return format(amount, ".2f")
+    except (InvalidOperation, ValueError):
+        raise ValueError("Сумма должна быть неотрицательной, с точностью до двух знаков") from None

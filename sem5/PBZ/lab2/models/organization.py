@@ -1,7 +1,11 @@
 import sqlite3
-from .database import get_connection
+from .database import get_connection, transaction, records
 
 class Organization:
+    @staticmethod
+    def list_all():
+        return records("SELECT * FROM Organization ORDER BY id")
+
     def __init__(self, organization_code: int, full_name: str, brief_name: str, address: str, bank_details: str, specialization: str, id: int | None = None):
         self._id = id
         self.organization_code = organization_code
@@ -73,12 +77,10 @@ class Organization:
         if self._id is None:
             raise ValueError("There is missing id!")
         
-        conn = get_connection()
-        try:
+        with transaction() as conn:
+            if conn.execute("SELECT 1 FROM Employee WHERE organization_id=?", (self._id,)).fetchone() or conn.execute("SELECT 1 FROM Contract WHERE organization_id=?", (self._id,)).fetchone():
+                raise ValueError("Организация связана с сотрудниками или договорами")
             cur = conn.execute('''DELETE FROM Organization WHERE id = ?''', (self._id,))
             if cur.rowcount == 0:
                 raise ValueError(f"Organization with this id: {self._id} doesn't exist!")
-            conn.commit()
-            self._id = None
-        finally:
-            conn.close()
+        self._id = None

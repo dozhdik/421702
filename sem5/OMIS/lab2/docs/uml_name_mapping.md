@@ -9,14 +9,14 @@
 | Имя в UML | Английское имя | Исходный файл |
 |---|---|---|
 | Пользователь | `User` | `omis_blog/domain.py` |
-| УчетнаяЗапись | `UserAccount` | `omis_blog/auth.py` |
+| УчетнаяЗапись | `UserAccount` | `omis_blog/domain.py` |
 | Роль | `Role` | `omis_blog/domain.py` |
 | ПравоДоступа | `AccessPermission` | `omis_blog/domain.py` |
 | АвторКонтента | `ContentAuthor` | `omis_blog/domain.py` |
 | Редактор | `Editor` | `omis_blog/domain.py` |
 | Читатель | `Reader` | `omis_blog/domain.py` |
 | АдминистраторПлатформы | `PlatformAdministrator` | `omis_blog/domain.py` |
-| Статья | `Article` | `omis_blog/presentation.py` |
+| Статья | `Article` | `omis_blog/domain.py` |
 | Рубрика | `Category` | `omis_blog/domain.py` |
 | Тег | `Tag` | `omis_blog/domain.py` |
 | Медиавложение | `MediaAttachment` | `omis_blog/domain.py` |
@@ -40,11 +40,11 @@
 | РепозиторийКомментариев | `CommentRepository` | `omis_blog/storage.py` |
 | РепозиторийЖалоб | `ComplaintRepository` | `omis_blog/storage.py` |
 | РепозиторийОтчетов | `ReportRepository` | `omis_blog/storage.py` |
-| КонтроллерПубликаций | `PublicationController` | `omis_blog/infrastructure.py` |
-| КонтроллерМодерации | `ModerationController` | `omis_blog/infrastructure.py` |
-| КонтроллерУведомлений | `NotificationController` | `omis_blog/infrastructure.py` |
-| КонтроллерЛенты | `FeedController` | `omis_blog/infrastructure.py` |
-| КонтроллерОтчетов | `ReportController` | `omis_blog/infrastructure.py` |
+| КонтроллерПубликаций | `PublicationController` | `omis_blog/controllers.py` |
+| КонтроллерМодерации | `ModerationController` | `omis_blog/controllers.py` |
+| КонтроллерУведомлений | `NotificationController` | `omis_blog/controllers.py` |
+| КонтроллерЛенты | `FeedController` | `omis_blog/controllers.py` |
+| КонтроллерОтчетов | `ReportController` | `omis_blog/controllers.py` |
 | IСтратегияМодерации | `IModerationStrategy` | `omis_blog/patterns.py` |
 | СтратегияРучнойМодерации | `ManualModerationStrategy` | `omis_blog/patterns.py` |
 | СтратегияАвтоФильтрации | `AutoFilterStrategy` | `omis_blog/patterns.py` |
@@ -55,14 +55,14 @@
 | КомандаУдаленияКомментария | `DeleteCommentCommand` | `omis_blog/patterns.py` |
 | IПредставление | `IView` | `omis_blog/presentation.py` |
 | БазовоеПредставление | `BaseView` | `omis_blog/presentation.py` |
-| IПредставлениеЛенты | `IFeedView` | `omis_blog/infrastructure.py` |
-| IПредставлениеФормыРедактора | `IArticleEditorView` | `omis_blog/infrastructure.py` |
-| IПредставлениеКабинетаМодератора | `IModeratorDashboardView` | `omis_blog/infrastructure.py` |
-| IПредставлениеЧтенияСтатьи | `IArticleDetailView` | `omis_blog/infrastructure.py` |
-| ПредставлениеЛенты | `FeedView` | `omis_blog/infrastructure.py` |
-| ПредставлениеФормыРедактора | `ArticleEditorView` | `omis_blog/infrastructure.py` |
-| ПредставлениеКабинетаМодератора | `ModeratorDashboardView` | `omis_blog/infrastructure.py` |
-| ПредставлениеЧтенияСтатьи | `ArticleDetailView` | `omis_blog/infrastructure.py` |
+| IПредставлениеЛенты | `IFeedView` | `omis_blog/presentation.py` |
+| IПредставлениеФормыРедактора | `IArticleEditorView` | `omis_blog/presentation.py` |
+| IПредставлениеКабинетаМодератора | `IModeratorDashboardView` | `omis_blog/presentation.py` |
+| IПредставлениеЧтенияСтатьи | `IArticleDetailView` | `omis_blog/presentation.py` |
+| ПредставлениеЛенты | `FeedView` | `omis_blog/presentation.py` |
+| ПредставлениеФормыРедактора | `ArticleEditorView` | `omis_blog/presentation.py` |
+| ПредставлениеКабинетаМодератора | `ModeratorDashboardView` | `omis_blog/presentation.py` |
+| ПредставлениеЧтенияСтатьи | `ArticleDetailView` | `omis_blog/presentation.py` |
 | ПредставлениеОтчетов | `ReportView` | `omis_blog/presentation.py` |
 | КонтейнерЗависимостей | `DependencyContainer` | `omis_blog/infrastructure.py` |
 | ФабрикаКонтроллеров | `ControllerFactory` | `omis_blog/infrastructure.py` |

@@ -1,8 +1,11 @@
 import sqlite3
+import os
+from contextlib import contextmanager
 from pathlib import Path
 
 def get_connection():
-    DB_PATH = Path(__file__).resolve().parent.parent / 'data' / 'insurance.db'
+    DB_PATH = Path(os.environ.get('INSURANCE_DB_PATH', Path(__file__).resolve().parent.parent / 'data' / 'insurance.db'))
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
@@ -79,5 +82,38 @@ def init_database():
         )
     ''')
 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS IndividualContract (
+        id INTEGER PRIMARY KEY, contract_number TEXT NOT NULL UNIQUE,
+        full_name TEXT NOT NULL, agent_id INTEGER NOT NULL REFERENCES Agent(id),
+        conclusion_date TEXT NOT NULL, end_date TEXT NOT NULL, amount TEXT NOT NULL)''')
+    cursor.execute('''CREATE TABLE IF NOT EXISTS InsuranceClaim (
+        id INTEGER PRIMARY KEY, contract_id INTEGER NOT NULL REFERENCES Contract(id),
+        employee_id INTEGER NOT NULL REFERENCES Employee(id), claim_date TEXT NOT NULL,
+        amount TEXT NOT NULL, description TEXT NOT NULL)''')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_org_dates ON Contract(organization_id, conclusion_date, end_date)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_agent ON Contract(agent_id)')
+    cursor.execute('CREATE INDEX IF NOT EXISTS idx_employee_org ON Employee(organization_id)')
     connection.commit()
     connection.close()
+
+
+@contextmanager
+def transaction():
+    conn = get_connection()
+    try:
+        conn.execute("BEGIN IMMEDIATE")
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+def records(query, params=()):
+    conn = get_connection()
+    try:
+        return [dict(row) for row in conn.execute(query, params).fetchall()]
+    finally:
+        conn.close()

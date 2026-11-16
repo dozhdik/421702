@@ -228,3 +228,12 @@ form { max-width: 100%; }
   .featured-card .card-content { padding: 22px; }
   .featured-card .article-excerpt { font-size: 16px; }
 }
+
+/* Management screens */
+.page-content, .page-content section, .table-scroll { min-width: 0; }
+.page-content section { margin-block: 2rem; }
+.table-scroll { max-width: 100%; overflow-x: auto; }
+.table-scroll table { width: 100%; border-collapse: collapse; }
+.table-scroll th, .table-scroll td { text-align: left; padding: .75rem; vertical-align: top; border-bottom: 1px solid #ccc; }
+.form-error { padding: 1rem; border-left: .3rem solid #a11; color: #781313; background: #fff1f1; }
+.page-heading h1, .page-content h2, .page-content h3 { overflow-wrap: anywhere; }

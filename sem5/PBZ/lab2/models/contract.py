@@ -1,5 +1,7 @@
 import sqlite3
-from .database import get_connection
+from .database import get_connection, transaction, records
+from .payout import money
+from decimal import Decimal
 from .employee import Employee
 import re
 from datetime import date
@@ -349,3 +351,87 @@ class Contract:
                 for row in rows
             ]
         }
+
+    @staticmethod
+    def save_contract(number, organization_id, agent_id, start, end, employee_ids, payouts, contract_id=None):
+        if not isinstance(number, str) or not number.strip():
+            raise ValueError("Укажите номер договора")
+        number = number.strip()
+        Contract.validate_date(start); Contract.validate_date(end)
+        if start > end:
+            raise ValueError("Дата окончания раньше даты начала")
+        if not employee_ids or len(employee_ids) != len(set(employee_ids)):
+            raise ValueError("Выберите хотя бы одного сотрудника без повторов")
+        amounts = {}
+        for category, amount in payouts.items():
+            if not isinstance(category, str) or not category.strip():
+                raise ValueError("Укажите категорию")
+            amounts[category.strip()] = money(amount)
+        with transaction() as conn:
+            if conn.execute("SELECT 1 FROM IndividualContract WHERE contract_number = ?", (number,)).fetchone():
+                raise ValueError("Номер уже используется индивидуальным договором")
+            categories = set()
+            for employee_id in employee_ids:
+                row = conn.execute("SELECT organization_id, risk_category FROM Employee WHERE id = ?", (employee_id,)).fetchone()
+                if not row or row["organization_id"] != organization_id:
+                    raise ValueError("Сотрудник не принадлежит организации договора")
+                categories.add(row["risk_category"])
+            if not categories.issubset(amounts):
+                raise ValueError("Укажите сумму для каждой категории выбранных сотрудников")
+            if contract_id is None:
+                cur = conn.execute("INSERT INTO Contract(contract_number, organization_id, agent_id, conclusion_date, end_date) VALUES (?, ?, ?, ?, ?)", (number, organization_id, agent_id, start, end))
+                contract_id = cur.lastrowid
+            else:
+                old = conn.execute("SELECT organization_id FROM Contract WHERE id = ?", (contract_id,)).fetchone()
+                if not old:
+                    raise ValueError("Договор не найден")
+                if old["organization_id"] != organization_id:
+                    raise ValueError("Организацию договора изменить нельзя")
+                claims = conn.execute("SELECT employee_id, claim_date, amount FROM InsuranceClaim WHERE contract_id = ?", (contract_id,)).fetchall()
+                for claim in claims:
+                    if claim["employee_id"] not in employee_ids or not start <= claim["claim_date"] <= end:
+                        raise ValueError("Изменение противоречит сохранённому страховому случаю")
+                    category = conn.execute("SELECT risk_category FROM Employee WHERE id = ?", (claim["employee_id"],)).fetchone()[0]
+                    if category not in amounts or Decimal(claim["amount"]) > Decimal(amounts[category]):
+                        raise ValueError("Сумма договора меньше выплаты по страховому случаю")
+                conn.execute("UPDATE Contract SET contract_number=?, agent_id=?, conclusion_date=?, end_date=? WHERE id=?", (number, agent_id, start, end, contract_id))
+                conn.execute("DELETE FROM ContractEmployee WHERE contract_id=?", (contract_id,))
+                conn.execute("DELETE FROM Payout WHERE contract_id=?", (contract_id,))
+            conn.executemany("INSERT INTO ContractEmployee(contract_id, employee_id) VALUES (?,?)", [(contract_id, i) for i in employee_ids])
+            conn.executemany("INSERT INTO Payout(contract_id, risk_category, payout_amount) VALUES (?,?,?)", [(contract_id, k, v) for k, v in amounts.items()])
+            return contract_id
+
+    @staticmethod
+    def delete_contract(contract_id):
+        with transaction() as conn:
+            if conn.execute("SELECT 1 FROM InsuranceClaim WHERE contract_id=?", (contract_id,)).fetchone():
+                raise ValueError("Договор содержит страховые случаи")
+            if not conn.execute("DELETE FROM Contract WHERE id=?", (contract_id,)).rowcount:
+                raise ValueError("Договор не найден")
+
+    @staticmethod
+    def report_contracts(code, selected_date):
+        report = Contract.dated_org_contract(code, selected_date)
+        if report is None:
+            return {"date": selected_date, "organization": None, "contracts": []}
+        rows = [{"contract_number": row["number"], "conclusion_date": row["start"],
+                 "end_date": row["end"]} for row in report["contracts"]]
+        return {"date": selected_date, "organization": {"full_name": report["organization_name"],
+                "address": report["address"]}, "contracts": rows}
+
+    @staticmethod
+    def report_agents(code, selected_date):
+        report = Contract.dated_org_agent(code, selected_date)
+        return {"date": selected_date, "agents": report["agents"] if report else []}
+
+    @staticmethod
+    def report_payouts(selected_date, code=None):
+        Contract.validate_date(selected_date)
+        query = """SELECT o.full_name AS organization, c.contract_number, p.risk_category, p.payout_amount
+            FROM Payout p JOIN Contract c ON c.id=p.contract_id JOIN Organization o ON o.id=c.organization_id
+            WHERE c.conclusion_date<=? AND c.end_date>=?"""
+        params = [selected_date,selected_date]
+        if code is not None:
+            query += " AND o.organization_code=?"
+            params.append(code)
+        return {"date":selected_date, "payouts":records(query+" ORDER BY o.full_name,c.contract_number,p.risk_category", params)}

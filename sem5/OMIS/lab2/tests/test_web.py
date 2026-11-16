@@ -160,7 +160,7 @@ def test_editor_media_autosave_search_archive_and_moderation(tmp_path):
     web = WebApp(app)
     author = Client(web)
     author.login("author")
-    assert "setInterval" in author.request("/editor/new")[1]
+    assert "/assets/editor.js" in author.request("/editor/new")[1]
     status, _, headers = author.request("/article/save", {"title": "Новый автосохранённый",
                                                         "content": "Начало", "action": "autosave"})
     assert status == "200 OK"
