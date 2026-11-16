@@ -4,14 +4,16 @@ import tempfile
 import unittest
 import subprocess
 import sys
+from unittest.mock import Mock
 from pathlib import Path
 
 from models.database import init_database, get_connection
 from models.seed import seed_database
-from main import list_items, save_item, delete_item
+from cli import list_items, save_item, delete_item
 from models.contract import Contract
 from models.payout import money
 from models.insurance_claim import InsuranceClaim
+from ui.app import App
 from models.organization import Organization
 from models.employee import Employee
 from models.agent import Agent
@@ -44,6 +46,30 @@ class InsuranceTests(unittest.TestCase):
         self.assertEqual(len(Contract.report_contracts(9001, "2026-12-01")["contracts"]), 1)
         with get_connection() as conn:
             self.assertEqual(conn.execute("PRAGMA foreign_key_check").fetchall(), [])
+
+    def test_gui_reports_use_tables(self):
+        seed_database()
+        app = Mock()
+        app.report_date.get.return_value = "2026-11-03"
+        app.report_code.get.return_value = "9001"
+        app.report_tree.get_children.return_value = ()
+        App.report(app, 1)
+        self.assertEqual(app.report_tree.insert.call_count, 2)
+        app.report_tree.insert.reset_mock()
+        App.report(app, 2)
+        self.assertEqual(app.report_tree.insert.call_count, 1)
+        app.report_tree.insert.reset_mock()
+        App.report(app, 3)
+        self.assertEqual(app.report_tree.insert.call_count, 5)
+
+    def test_seed_command_persists_between_processes(self):
+        env = os.environ.copy()
+        result = subprocess.run([sys.executable, "main.py", "--seed"], capture_output=True, text=True, env=env, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(len(Contract.report_contracts(9001, "2026-11-03")["contracts"]), 2)
+        result = subprocess.run([sys.executable, "main.py", "--seed"], capture_output=True, text=True, env=env, timeout=10)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertIn("'contracts': 0", result.stdout)
 
     def test_validation(self):
         for value in ("2026-02-30", "2026-1-01", "hello"):
@@ -144,7 +170,7 @@ class InsuranceTests(unittest.TestCase):
     def test_console_invalid_input_and_cancel_delete(self):
         seed_database()
         commands = "99\n6\n9001\n2026-02-30\n1\n4\n1\nнет\n0\n0\n"
-        result = subprocess.run([sys.executable, "main.py"], input=commands, text=True,
+        result = subprocess.run([sys.executable, "main.py", "--console"], input=commands, text=True,
                                 capture_output=True, env=os.environ.copy(), timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Неизвестный пункт меню", result.stdout)
@@ -154,7 +180,7 @@ class InsuranceTests(unittest.TestCase):
         self.assertNotIn("Traceback", result.stderr)
 
     def test_console_eof(self):
-        result = subprocess.run([sys.executable, "main.py"], input="", text=True,
+        result = subprocess.run([sys.executable, "main.py", "--console"], input="", text=True,
                                 capture_output=True, env=os.environ.copy(), timeout=10)
         self.assertEqual(result.returncode, 0)
         self.assertIn("До свидания", result.stdout)
@@ -162,7 +188,7 @@ class InsuranceTests(unittest.TestCase):
     def test_console_contract_and_zero_payout(self):
         seed_database()
         commands = "4\n2\n1\nTEST-CLI\n1\n2026-01-01\n2026-12-31\n1\n0\n0\n8\n9001\n2026-06-01\n0\n"
-        result = subprocess.run([sys.executable, "main.py"], input=commands, text=True,
+        result = subprocess.run([sys.executable, "main.py", "--console"], input=commands, text=True,
                                 capture_output=True, env=os.environ.copy(), timeout=10)
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("Договор сохранён", result.stdout)

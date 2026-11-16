@@ -1,0 +1,30 @@
+# Проектирование и материалы для отчёта
+
+## Сценарии
+
+Пользователь выбирает вкладку, просматривает таблицу и открывает форму добавления или редактирования. Удаление требует подтверждения. Для коллективного договора выбираются организация, агент и сотрудники, вводятся даты и суммы категорий. Для отчёта задаются дата и при необходимости код организации; результаты выводятся в таблицу с прокруткой.
+
+## Связи данных
+
+```mermaid
+erDiagram
+    Organization ||--o{ Employee : employs
+    Organization ||--o{ Contract : signs
+    Agent ||--o{ Contract : manages
+    Agent ||--o{ IndividualContract : manages
+    Contract ||--o{ ContractEmployee : contains
+    Employee ||--o{ ContractEmployee : insured
+    Contract ||--o{ Payout : defines
+    Contract ||--o{ InsuranceClaim : includes
+    Employee ||--o{ InsuranceClaim : receives
+```
+
+Основные таблицы: `Organization`, `Employee`, `Agent`, `Contract`, `ContractEmployee`, `Payout`, `IndividualContract`, `InsuranceClaim`. Первичные и внешние ключи определены в `models/database.py`; проверка внешних ключей включается при каждом подключении.
+
+## Отчёты
+
+SQL-запросы находятся в `models/contract.py`. Они связывают договор с организацией, агентом или суммами категорий, фильтруют даты условием `conclusion_date <= ? AND end_date >= ?`. Для списка агентов применяется `DISTINCT`. Отчёт по категориям сохраняет номер договора и не складывает разные суммы.
+
+## Материалы для скриншотов
+
+Главное окно с вкладками, таблицы организаций и сотрудников, форма коллективного договора, таблица страховых случаев, каждый из трёх отчётов. Средства разработки: Python, SQLite, стандартные модули sqlite3, tkinter/ttk, unittest.
