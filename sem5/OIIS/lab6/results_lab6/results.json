@@ -1,0 +1,154 @@
+{
+  "width": 800,
+  "height": 560,
+  "threshold": 0.82,
+  "scales": [
+    0.8,
+    1.0,
+    1.2
+  ],
+  "angles_deg": [
+    0,
+    90,
+    180,
+    270
+  ],
+  "candidate_count": 6,
+  "detection_count": 6,
+  "detections": [
+    {
+      "x": 220,
+      "y": 320,
+      "width": 35,
+      "height": 35,
+      "score": 0.9997013692406282,
+      "scale": 1.0,
+      "angle_deg": 270
+    },
+    {
+      "x": 90,
+      "y": 90,
+      "width": 35,
+      "height": 35,
+      "score": 0.999688426322453,
+      "scale": 1.0,
+      "angle_deg": 0
+    },
+    {
+      "x": 700,
+      "y": 465,
+      "width": 28,
+      "height": 28,
+      "score": 0.9996464466302011,
+      "scale": 0.8,
+      "angle_deg": 180
+    },
+    {
+      "x": 640,
+      "y": 210,
+      "width": 42,
+      "height": 42,
+      "score": 0.9996435282123012,
+      "scale": 1.2,
+      "angle_deg": 180
+    },
+    {
+      "x": 485,
+      "y": 450,
+      "width": 42,
+      "height": 42,
+      "score": 0.9996400373977279,
+      "scale": 1.2,
+      "angle_deg": 0
+    },
+    {
+      "x": 360,
+      "y": 92,
+      "width": 28,
+      "height": 28,
+      "score": 0.9996019402963403,
+      "scale": 0.8,
+      "angle_deg": 90
+    }
+  ],
+  "metrics": {
+    "tp": 6,
+    "fp": 0,
+    "fn": 0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1": 1.0,
+    "matching_iou": 0.5
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.45,
+      "tp": 6,
+      "fp": 42,
+      "fn": 0,
+      "precision": 0.125,
+      "recall": 1.0,
+      "f1": 0.2222222222222222,
+      "matching_iou": 0.5
+    },
+    {
+      "threshold": 0.65,
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "matching_iou": 0.5
+    },
+    {
+      "threshold": 0.82,
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "matching_iou": 0.5
+    },
+    {
+      "threshold": 0.97,
+      "tp": 6,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0,
+      "matching_iou": 0.5
+    },
+    {
+      "threshold": 0.99965,
+      "tp": 2,
+      "fp": 0,
+      "fn": 4,
+      "precision": 1.0,
+      "recall": 0.3333333333333333,
+      "f1": 0.5,
+      "matching_iou": 0.5
+    },
+    {
+      "threshold": 0.9999,
+      "tp": 0,
+      "fp": 0,
+      "fn": 6,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0,
+      "matching_iou": 0.5
+    }
+  ],
+  "single_template_metrics": {
+    "tp": 1,
+    "fp": 0,
+    "fn": 5,
+    "precision": 1.0,
+    "recall": 0.16666666666666666,
+    "f1": 0.2857142857142857,
+    "matching_iou": 0.5
+  }
+}

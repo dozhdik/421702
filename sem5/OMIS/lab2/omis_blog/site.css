@@ -130,6 +130,11 @@ textarea { min-height: 150px; resize: vertical; }
 input[type="checkbox"] { display: inline-block; width: 20px; min-height: 20px; margin: 0 8px 0 0; vertical-align: middle; }
 input[type="file"] { padding: 8px; }
 .auth-form { max-width: 480px; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 30px; background: var(--color-surface); box-shadow: var(--shadow-card); }
+.auth-form { margin-inline: auto; }
+.management-card, .notification-card { margin: 16px 0; }
+.management-card h3, .notification-card p { margin-top: 0; }
+.management-card form { margin: 16px 0; }
+.management-card textarea { min-height: 100px; }
 .filter-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
 .filter-nav a { border: 1px solid var(--color-border); border-radius: 999px; padding: 8px 14px; background: var(--color-surface); }
 .filter-nav a.selected { border-color: var(--color-primary); background: var(--color-primary); color: #fff; }

@@ -1,0 +1,4 @@
+﻿region,true_disparity_px,median_disparity_px,true_depth_m,median_depth_m,valid_pixels
+0,8,8.0,9.6,9.600000381469727,91030
+1,16,16.0,4.8,4.800000190734863,29829
+2,32,32.0,2.4,2.4000000953674316,16317

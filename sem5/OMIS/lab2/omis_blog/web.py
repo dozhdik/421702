@@ -264,9 +264,9 @@ class WebApp:
         if path == "/notifications":
             if not self.account:
                 raise d.PermissionDenied("Войдите")
-            body = "".join(f'<article>{escape_html(row["text"])} <small>{escape_html(row["created_at"])}</small></article>'
+            body = "".join(f'<article class="list-card notification-card"><p>{escape_html(row["text"])}</p><time class="muted">{escape_html(row["created_at"])}</time></article>'
                            for row in self.notices.inbox(self.account.user_id))
-            return "200 OK", self._page("Уведомления", body or "<p>Пока нет уведомлений.</p>"), []
+            return "200 OK", self._page("Уведомления", body or '<p class="empty-state">Пока нет уведомлений.</p>'), []
         if path.startswith("/media/"):
             return self._media(path.split("/")[2])
         raise d.NotFound(path)
@@ -334,7 +334,7 @@ class WebApp:
             if item.content_type.startswith("image/")), None)
         cover = (f'<img class="cover-image" src="/media/{escape_html(media.media_id)}" '
                  f'alt="Иллюстрация к статье: {escape_html(article.title)}">' if media else
-                 f'<span class="cover-symbol" aria-hidden="true">✦</span>')
+                 '<span class="cover-symbol" aria-hidden="true">✦</span>')
         date = article.published_at.date().isoformat() if article.published_at else ""
         read_label = f'{read_minutes} мин чтения'
         featured_class = " featured-card" if featured else ""
@@ -365,13 +365,15 @@ class WebApp:
                                          (author.author_id,), 'created_at DESC')
         if selected != "all":
             articles = [item for item in articles if item.publication_status.value == selected]
-        body = links + '<div class="my-articles">'
+        body = '<p><a class="button button-primary" href="/editor/new">Создать статью</a></p>' + links + '<div class="my-articles">'
         for item in articles:
             editable = item.publication_status in (d.ArticleStatus.DRAFT, d.ArticleStatus.NEEDS_REVISION)
+            category = self.db.get(d.Category, item.category_id)
             href = f'/editor/{escape_html(item.article_id)}' if editable else f'/article/{escape_html(item.article_id)}'
             body += (f'<article class="list-card"><span class="status-badge">{escape_html(status_label(item.publication_status))}</span>'
                      f'<h2><a href="{href}">{escape_html(item.title or "Без названия")}</a></h2>'
-                     f'<p class="muted">Создано {escape_html(item.created_at.date())}</p>')
+                     f'<p class="muted">Создано {escape_html(item.created_at.date())} · {escape_html(category.name if category else "Без рубрики")}</p>'
+                     f'<a class="button" href="{href}">{"Редактировать" if editable else "Просмотреть"}</a>')
             for note in self.db.list_entities(d.EditorRemark, 'article_id=?', (item.article_id,)):
                 body += f'<p class="editor-note"><strong>Замечание редактора:</strong> {escape_html(note.remark_text)}</p>'
             body += self._delete_form(item.article_id)
@@ -389,7 +391,7 @@ class WebApp:
     def _delete_form(self, article_id: str) -> str:
         return (f'<form class="article-delete-form" method="post" '
                 f'action="/article/{escape_html(article_id)}/delete" '
-                'onsubmit="return confirm(&quot;Удалить статью? Это действие нельзя отменить.&quot;)">'
+                'onsubmit="return confirm(&quot;Удалить статью? Она исчезнет из ленты и списков. Это действие нельзя отменить.&quot;)">'
                 f'{self._csrf()}<button class="danger" type="submit">Удалить</button></form>')
 
     def _article(self, article_id: str) -> str:
@@ -526,8 +528,8 @@ class WebApp:
                 f'<label><input type="checkbox" name="preview" {"checked" if preview else ""}>Показывать превью</label>'
                 '<label>Медиавложение (PNG, JPEG, PDF; до 5 МБ)<input type="file" name="media" accept="image/png,image/jpeg,application/pdf"></label>'
                 '<button name="action" value="draft">Сохранить черновик</button> '
-                '<button name="action" value="submit">Отправить на модерацию</button>'
-                '<span id="autosave" class="muted">Не сохранено автоматически</span></form>')
+                '<button class="primary" name="action" value="submit">Отправить на модерацию</button>'
+                '<span id="autosave" class="muted" role="status" aria-live="polite">Не сохранено автоматически</span></form>')
         if article_id != "new":
             body += self._delete_form(article.article_id)
             for media in self.db.list_entities(d.MediaAttachment, 'article_id=?', (article.article_id,)):
@@ -550,9 +552,10 @@ class WebApp:
     def _moderation(self) -> str:
         selected = self.params.get("filter", "all")
         self.app.views[2].display_queue(selected)
-        body = ('<p><a href="/moderation?filter=all">Всё</a> · '
-                '<a href="/moderation?filter=articles">Статьи</a> · '
-                '<a href="/moderation?filter=complaints">Жалобы</a></p>')
+        body = '<nav class="filter-nav" aria-label="Разделы модерации">' + ''.join(
+            f'<a href="/moderation?filter={value}" class="{"selected" if selected == value else ""}">{label}</a>'
+            for value, label in (("all", "Всё"), ("articles", "Статьи"), ("complaints", "Жалобы"))
+        ) + '</nav>'
         if selected in ("all", "articles"):
             tickets = self.db.list_entities(d.ModerationQueueEntry,
                                      'processed_at IS NULL AND article_id IN '
@@ -565,7 +568,11 @@ class WebApp:
                 article = self.db.get(d.Article, ticket.article_id)
                 if article is None:
                     continue
-                body += (f'<article><strong>{escape_html(article.title)}</strong> · приоритет {ticket.priority}'
+                author = self.db.get(d.ContentAuthor, article.author_id)
+                body += (f'<article class="list-card management-card"><h3>{escape_html(article.title)}</h3>'
+                         f'<p class="muted">{escape_html(author.full_name if author else "Автор")} · '
+                         f'{escape_html(ticket.received_at.date())} · приоритет {ticket.priority} · '
+                         f'{escape_html(status_label(article.publication_status))}</p>'
                          f'<p>{escape_html(article.content)}</p><a href="/article/{escape_html(article.article_id)}">Открыть статью и вложения</a>'
                          f'<form method="post" action="/moderation/priority/{escape_html(ticket.queue_entry_id)}">{self._csrf()}'
                          f'<label>Приоритет <input type="number" min="0" max="10" name="priority" value="{ticket.priority}"></label>'
@@ -573,7 +580,7 @@ class WebApp:
                          f'<form method="post" action="/moderation/article/{escape_html(article.article_id)}">{self._csrf()}'
                          '<label>Замечание<textarea name="note"></textarea></label>'
                          '<button name="decision" value="reject">Вернуть на доработку</button> '
-                         '<button name="decision" value="approve">Одобрить и опубликовать</button></form></article>')
+                         '<button class="primary" name="decision" value="approve">Одобрить и опубликовать</button></form></article>')
         if selected in ("all", "complaints"):
             complaints = self.moderation.complaint_repository.get_complaint_queue()
             ids = sorted({c.comment_id for c in complaints})
@@ -586,7 +593,7 @@ class WebApp:
                 if comment is None:
                     continue
                 count = self.moderation.complaint_repository.get_complaint_count(comment_id)
-                body += (f'<article><p>{escape_html(comment.text)}</p><small>Жалоб: {count}; статус: {escape_html(status_label(comment.status))}</small>'
+                body += (f'<article class="list-card management-card"><p>{escape_html(comment.text)}</p><small>Жалоб: {count}; статус: {escape_html(status_label(comment.status))}</small>'
                          f'<form method="post" action="/moderation/complaint/{escape_html(comment_id)}">{self._csrf()}'
                          '<button name="decision" value="confirm">Подтвердить удаление</button> '
                          '<button name="decision" value="dismiss">Отклонить жалобу и восстановить</button></form></article>')

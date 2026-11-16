@@ -1,0 +1,41 @@
+{
+  "width": 512,
+  "height": 320,
+  "anaglyph": "R=left.R, G=right.G, B=right.B",
+  "block_size": 9,
+  "max_disparity": 48,
+  "valid_fraction": 0.91514892578125,
+  "focal_px": 640.0,
+  "baseline_m": 0.12,
+  "eligible_pixels": 137640,
+  "evaluated_pixels": 137176,
+  "coverage": 0.9966288869514676,
+  "mae_px": 0.12969470024108887,
+  "bad_1px_fraction": 0.00899574269551525,
+  "regions": [
+    {
+      "region": 0,
+      "true_disparity_px": 8,
+      "median_disparity_px": 8.0,
+      "true_depth_m": 9.6,
+      "median_depth_m": 9.600000381469727,
+      "valid_pixels": 91030
+    },
+    {
+      "region": 1,
+      "true_disparity_px": 16,
+      "median_disparity_px": 16.0,
+      "true_depth_m": 4.8,
+      "median_depth_m": 4.800000190734863,
+      "valid_pixels": 29829
+    },
+    {
+      "region": 2,
+      "true_disparity_px": 32,
+      "median_disparity_px": 32.0,
+      "true_depth_m": 2.4,
+      "median_depth_m": 2.4000000953674316,
+      "valid_pixels": 16317
+    }
+  ]
+}

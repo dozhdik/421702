@@ -35,3 +35,11 @@
 | Все UML-классы, поля, методы и связи | A/E | автоматический coverage/roundtrip | `tests/test_uml_coverage.py`, `tests/test_storage.py::test_every_entity_roundtrips_across_restart` |
 | Фабрики, контейнер, конфигуратор, точка входа | E.4/E.5 | создают реальные связанные объекты | `tests/test_infrastructure.py::test_configurator_creates_and_links_all_components` |
 | Чистый запуск и данные после рестарта | README §8 | UI работает без ручной БД | `tests/test_storage.py::test_every_entity_roundtrips_across_restart`, `tests/test_web.py::test_role_scenarios_in_browser` |
+
+## UI/UX Stage 2 — промежуточная проверка
+
+| Проверка | Результат |
+| --- | --- |
+| Полный pytest после этапов 0, 1, 2, 3 и 4 | По 31 тесту пройдено на каждом checkpoint |
+| Лента, статья, редактор, мои статьи, модерация и вход | Снимки Firefox при ширине 360 и 1280 px в `docs/screenshots/stage2/after/` |
+| Ручная проверка клавиатурой, контраста и ширины 768 px | Ещё требуется |

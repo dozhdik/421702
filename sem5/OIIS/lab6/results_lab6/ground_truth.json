@@ -1,0 +1,50 @@
+[
+  {
+    "x": 90,
+    "y": 90,
+    "width": 35,
+    "height": 35,
+    "scale": 1.0,
+    "angle_deg": 0
+  },
+  {
+    "x": 360,
+    "y": 92,
+    "width": 28,
+    "height": 28,
+    "scale": 0.8,
+    "angle_deg": 90
+  },
+  {
+    "x": 640,
+    "y": 210,
+    "width": 42,
+    "height": 42,
+    "scale": 1.2,
+    "angle_deg": 180
+  },
+  {
+    "x": 220,
+    "y": 320,
+    "width": 35,
+    "height": 35,
+    "scale": 1.0,
+    "angle_deg": 270
+  },
+  {
+    "x": 485,
+    "y": 450,
+    "width": 42,
+    "height": 42,
+    "scale": 1.2,
+    "angle_deg": 0
+  },
+  {
+    "x": 700,
+    "y": 465,
+    "width": 28,
+    "height": 28,
+    "scale": 0.8,
+    "angle_deg": 180
+  }
+]
