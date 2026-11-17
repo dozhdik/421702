@@ -25,9 +25,9 @@ def seed_company(company):
         orgs, agents, employees = [], [], {}
         for index, name in enumerate(org_names):
             code = 300000000 + token * 3 + index
-            full_name = f"{name} ({company})"
+            full_name = name
             row = conn.execute("SELECT id,full_name FROM Organization WHERE organization_code=?", (code,)).fetchone()
-            if row and row["full_name"] != full_name:
+            if row and row["full_name"] not in (full_name, f"{name} ({company})"):
                 orgs.append(None)
                 continue
             if row:

@@ -47,6 +47,16 @@ def migrate_legacy_samples():
             if re.fullmatch(r"BY00 DEMO \d{4}", row["bank_details"]):
                 changes.append(("Organization", "bank_details", row["id"],
                                 "BY00 TEST 0000 0000 " + row["bank_details"][-4:] + " 0000"))
+        companies = [row[0] for row in conn.execute("""SELECT name FROM InsuranceCompany
+            UNION SELECT insurance_company FROM Agent""") if row[0]]
+        for row in conn.execute("SELECT id, full_name, brief_name FROM Organization"):
+            for column in ("full_name", "brief_name"):
+                value = row[column]
+                for company in sorted(companies, key=len, reverse=True):
+                    suffix = f" ({company})"
+                    if value.endswith(suffix) and value[:-len(suffix)].strip():
+                        changes.append(("Organization", column, row["id"], value[:-len(suffix)].rstrip()))
+                        break
         if not changes:
             return None
         path = conn.execute("PRAGMA database_list").fetchone()["file"]

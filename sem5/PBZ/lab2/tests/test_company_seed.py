@@ -61,6 +61,28 @@ class CompanySeedTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             seed_company("Несуществующая")
 
+    def test_organization_names_and_existing_suffix_migration(self):
+        company = register_company('Страховая компания', '1234')
+        seed_company(company.name)
+        organizations = company.organizations()
+        self.assertEqual(len(organizations), 3)
+        self.assertTrue(all(f'({company.name})' not in row['full_name'] for row in organizations))
+        original = organizations[0]
+        with get_connection() as conn:
+            conn.execute('UPDATE Organization SET full_name=?, brief_name=? WHERE id=?',
+                         (original['full_name'] + f' ({company.name})',
+                          original['brief_name'] + f' ({company.name})', original['id']))
+        contracts_before = company.contracts()
+        init_database()
+        changed = next(row for row in company.organizations() if row['id'] == original['id'])
+        self.assertEqual(changed['full_name'], original['full_name'])
+        self.assertEqual(changed['brief_name'], original['brief_name'])
+        self.assertEqual(company.contracts(), contracts_before[:0] + [
+            dict(row, full_name=original['full_name']) if row['full_name'].endswith(f' ({company.name})') else row
+            for row in contracts_before])
+        self.assertTrue(all(value == 0 for value in seed_company(company.name).values()))
+        self.assertEqual(len(list(Path(self.temp.name).glob('insurance.before-format-*.db'))), 1)
+
     def test_full_clear_resets_autoincrement(self):
         clear_database()
         seed_database()
