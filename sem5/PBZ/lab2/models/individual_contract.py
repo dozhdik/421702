@@ -1,6 +1,7 @@
 from .contract import Contract
 from .database import records, transaction
 from .payout import money
+from .validation import required_text
 
 
 class IndividualContract:
@@ -13,10 +14,7 @@ class IndividualContract:
         fields = ("contract_number", "full_name", "agent_id", "conclusion_date", "end_date", "amount")
         data = {}
         for field in fields:
-            value = str(values.get(field, "")).strip()
-            if not value:
-                raise ValueError(f"Заполните поле {field}")
-            data[field] = value
+            data[field] = required_text(str(values.get(field, "")), field)
         try:
             data["agent_id"] = int(data["agent_id"])
             if data["agent_id"] <= 0:

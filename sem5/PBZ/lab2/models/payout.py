@@ -1,6 +1,7 @@
 import sqlite3
 from .database import get_connection
 from decimal import Decimal, InvalidOperation
+from .validation import required_text
 
 class Payout:
     def __init__(self, contract_id: int, risk_category: str, payout_amount: float | int, id: int | None = None):
@@ -35,8 +36,7 @@ class Payout:
         if type(self._contract_id) is not int or self._contract_id <= 0:
             raise ValueError("Incorrect data type")
 
-        if not isinstance(self.risk_category, str) or not self.risk_category.strip():
-            raise ValueError("Incorrect data type")
+        self.risk_category = required_text(self.risk_category, "категория риска")
 
         try:
             if isinstance(self.payout_amount, bool):

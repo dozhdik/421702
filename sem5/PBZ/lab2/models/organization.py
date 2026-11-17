@@ -1,5 +1,6 @@
 import sqlite3
 from .database import get_connection, transaction, records
+from .validation import required_text
 
 class Organization:
     @staticmethod
@@ -40,9 +41,13 @@ class Organization:
         if type(self.organization_code) is not int or self.organization_code <= 0:
             raise ValueError("Incorrect data type!")
         for name in ("full_name", "brief_name", "address", "bank_details", "specialization"):
-            value = getattr(self, name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"The variable {name} cannot be empty!")
+            setattr(self, name, required_text(getattr(self, name), name))
+        conn = get_connection()
+        try:
+            if conn.execute("SELECT 1 FROM Organization WHERE full_name=? AND id!=?", (self.full_name, self._id or 0)).fetchone():
+                raise ValueError("Организация с таким названием уже существует")
+        finally:
+            conn.close()
 
     def add(self):
         if self._id is not None:

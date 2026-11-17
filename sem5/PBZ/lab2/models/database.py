@@ -15,6 +15,10 @@ def init_database():
     connection = get_connection()
     cursor = connection.cursor()
 
+    cursor.execute('''CREATE TABLE IF NOT EXISTS InsuranceCompany(
+        name TEXT PRIMARY KEY NOT NULL
+        )''')
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Organization(
         id                 INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -93,8 +97,11 @@ def init_database():
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_org_dates ON Contract(organization_id, conclusion_date, end_date)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_agent ON Contract(agent_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_employee_org ON Employee(organization_id)')
+    cursor.execute("INSERT OR IGNORE INTO InsuranceCompany(name) SELECT DISTINCT insurance_company FROM Agent WHERE trim(insurance_company) != ''")
     connection.commit()
     connection.close()
+    from .format_migration import migrate_legacy_samples
+    migrate_legacy_samples()
 
 
 @contextmanager
@@ -117,3 +124,28 @@ def records(query, params=()):
         return [dict(row) for row in conn.execute(query, params).fetchall()]
     finally:
         conn.close()
+
+
+def clear_database():
+    """Delete all user table rows atomically, keeping the schema and foreign keys."""
+    with transaction() as conn:
+        tables = [row["name"] for row in conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND substr(name, 1, 7) != 'sqlite_'"
+        )]
+        remaining = set(tables)
+        while remaining:
+            parents = set()
+            for table in remaining:
+                quoted = '"' + table.replace('"', '""') + '"'
+                for row in conn.execute(f"PRAGMA foreign_key_list({quoted})"):
+                    if row["table"] in remaining and row["table"] != table:
+                        parents.add(row["table"])
+            leaves = sorted(remaining - parents)
+            if not leaves:
+                raise sqlite3.IntegrityError("Невозможно очистить таблицы с циклическими внешними ключами")
+            for table in leaves:
+                quoted = '"' + table.replace('"', '""') + '"'
+                conn.execute(f"DELETE FROM {quoted}")
+                remaining.remove(table)
+        if conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='sqlite_sequence'").fetchone():
+            conn.execute("DELETE FROM sqlite_sequence")

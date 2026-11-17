@@ -1,6 +1,7 @@
 import sqlite3
 from .database import get_connection, transaction, records
 from .payout import money
+from .validation import required_text
 from decimal import Decimal
 from .employee import Employee
 import re
@@ -62,8 +63,7 @@ class Contract:
             if type(value) is not int or value <= 0:
                 raise ValueError(f"There is incorrect type of data in varieble {name}!")
 
-        if not isinstance(self.contract_number, str) or not self.contract_number.strip():
-            raise ValueError(f"The varieble {self.contract_number} can't be empty!")
+        self.contract_number = required_text(self.contract_number, "номер договора")
 
         Contract.validate_date(self.conclusion_date)
         Contract.validate_date(self.end_date)
@@ -354,9 +354,7 @@ class Contract:
 
     @staticmethod
     def save_contract(number, organization_id, agent_id, start, end, employee_ids, payouts, contract_id=None):
-        if not isinstance(number, str) or not number.strip():
-            raise ValueError("Укажите номер договора")
-        number = number.strip()
+        number = required_text(number, "номер договора")
         Contract.validate_date(start); Contract.validate_date(end)
         if start > end:
             raise ValueError("Дата окончания раньше даты начала")
@@ -364,9 +362,7 @@ class Contract:
             raise ValueError("Выберите хотя бы одного сотрудника без повторов")
         amounts = {}
         for category, amount in payouts.items():
-            if not isinstance(category, str) or not category.strip():
-                raise ValueError("Укажите категорию")
-            amounts[category.strip()] = money(amount)
+            amounts[required_text(category, "категория")] = money(amount)
         with transaction() as conn:
             if conn.execute("SELECT 1 FROM IndividualContract WHERE contract_number = ?", (number,)).fetchone():
                 raise ValueError("Номер уже используется индивидуальным договором")
@@ -427,7 +423,8 @@ class Contract:
     @staticmethod
     def report_payouts(selected_date, code=None):
         Contract.validate_date(selected_date)
-        query = """SELECT o.full_name AS organization, c.contract_number, p.risk_category, p.payout_amount
+        query = """SELECT o.full_name AS organization, c.contract_number, p.risk_category, p.payout_amount,
+                   c.conclusion_date, c.end_date
             FROM Payout p JOIN Contract c ON c.id=p.contract_id JOIN Organization o ON o.id=c.organization_id
             WHERE c.conclusion_date<=? AND c.end_date>=?"""
         params = [selected_date,selected_date]

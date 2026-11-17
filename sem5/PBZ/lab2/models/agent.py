@@ -1,5 +1,6 @@
 import sqlite3
 from .database import get_connection, transaction, records
+from .validation import required_text, phone_number
 
 class Agent:
     @staticmethod
@@ -33,10 +34,9 @@ class Agent:
         return cls.from_row(row) if row else None
 
     def validate(self):
-        for name in ('full_name', 'passport_details', 'phone_number', 'insurance_company'):
-            value = getattr(self, name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"The variable {name} cannot be empty!")
+        for name in ('full_name', 'passport_details', 'insurance_company'):
+            setattr(self, name, required_text(getattr(self, name), name))
+        self.phone_number = phone_number(self.phone_number)
 
     def add(self):
         if self._id is not None:

@@ -2,7 +2,6 @@ import argparse
 import sqlite3
 
 from models.database import init_database
-from models.seed import seed_database
 from models.database import records
 from models.organization import Organization
 from models.employee import Employee
@@ -347,13 +346,14 @@ def report(kind):
         data = Contract.report_payouts(selected_date, code)
         print(f"Дата: {selected_date}")
         show_rows(data["payouts"], {"organization":"Организация", "contract_number":"Договор",
-                                   "risk_category":"Категория", "payout_amount":"Сумма"})
+                                   "risk_category":"Категория", "payout_amount":"Сумма",
+                                   "conclusion_date":"Действует с", "end_date":"Действует по"})
 
 
 def menu():
     while True:
         print("\n=== УЧЁТ ДОГОВОРОВ СТРАХОВАНИЯ ===")
-        print("1. Организации\n2. Страхуемые сотрудники\n3. Страховые агенты\n4. Коллективные договоры\n5. Суммы выплат по категориям\n6. Отчёт: действующие договоры организации\n7. Отчёт: агенты организации\n8. Отчёт: выплаты по категориям\n9. Заполнить БД демонстрационными данными\n10. Индивидуальные договоры\n11. Страховые случаи\n0. Выход")
+        print("1. Организации\n2. Страхуемые сотрудники\n3. Страховые агенты\n4. Коллективные договоры\n5. Суммы выплат по категориям\n6. Отчёт: действующие договоры организации\n7. Отчёт: агенты организации\n8. Отчёт: выплаты по категориям\n10. Индивидуальные договоры\n11. Страховые случаи\n0. Выход")
         choice = input("Выберите пункт: ").strip()
         try:
             if choice == "0": print("До свидания!"); return
@@ -363,7 +363,6 @@ def menu():
             elif choice == "4": contract_menu()
             elif choice == "5": payout_menu()
             elif choice in ("6", "7", "8"): report(int(choice)-5)
-            elif choice == "9": print("Добавлено:", seed_database())
             elif choice == "10": entity_menu("individuals", "Индивидуальные договоры")
             elif choice == "11": claims_menu()
             else: print("Неизвестный пункт меню.")
@@ -373,14 +372,10 @@ def menu():
 
 def main():
     parser = argparse.ArgumentParser(description="Учёт договоров страхования")
-    parser.add_argument("--seed", action="store_true", help="загрузить демонстрационные данные и выйти")
     args = parser.parse_args()
     try:
         init_database()
-        if args.seed:
-            print(seed_database())
-        else:
-            menu()
+        menu()
     except (EOFError, KeyboardInterrupt):
         print("\nДо свидания!")
     except sqlite3.Error as exc:
@@ -388,4 +383,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    print("Выполните вход в графическом приложении: python3 main.py")

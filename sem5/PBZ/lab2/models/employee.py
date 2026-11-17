@@ -1,6 +1,7 @@
 import sqlite3
 from .database import get_connection, transaction, records
 from decimal import Decimal
+from .validation import required_text
 
 class Employee:
     @staticmethod
@@ -43,9 +44,7 @@ class Employee:
             if type(value) is not int or value <= 0:
                 raise ValueError("Incorrect data type!")
         for name in ('full_name', 'risk_category'):
-            value = getattr(self, name)
-            if not isinstance(value, str) or not value.strip():
-                raise ValueError(f"The variable {name} cannot be empty!")
+            setattr(self, name, required_text(getattr(self, name), name))
 
     def add(self):
         if self._id is not None:

@@ -3,6 +3,7 @@ from decimal import Decimal
 from .database import transaction
 from .contract import Contract
 from .payout import money
+from .validation import required_text
 
 
 class InsuranceClaim:
@@ -10,9 +11,7 @@ class InsuranceClaim:
     def save_claim(contract_id, employee_id, claim_date, amount, description, claim_id=None):
         Contract.validate_date(claim_date)
         amount = money(amount)
-        if not isinstance(description, str) or not description.strip():
-            raise ValueError("Укажите описание")
-        description = description.strip()
+        description = required_text(description, "описание")
         with transaction() as conn:
             row = conn.execute("""SELECT c.conclusion_date, c.end_date, p.payout_amount
                 FROM Contract c JOIN ContractEmployee ce ON ce.contract_id=c.id
