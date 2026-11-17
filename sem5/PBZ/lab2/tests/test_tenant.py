@@ -7,7 +7,7 @@ from unittest.mock import Mock, patch
 
 from models.database import get_connection, init_database
 from models.seed import seed_database
-from models.tenant import authenticate
+from models.tenant import authenticate, register_company
 from models.validation import phone_number, required_text
 from ui.app import App
 
@@ -50,6 +50,54 @@ class TenantTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             first.require_claim(other.claims()[0]["id"])
         self.assertTrue(all(r["contract_id"] in {c["id"] for c in first.contracts()} for r in first.claims()))
+
+    def test_company_crud_before_contract_and_isolation(self):
+        company = register_company('Новая страховая', '1234')
+        other = authenticate('БелСтрах', '1234')
+        organization = dict(organization_code=99981, full_name='ООО Горизонт', brief_name='Горизонт',
+                            address='Минск, ул. Лесная, 5', bank_details='BY123456', specialization='Торговля')
+        org_id = company.save_organization(organization)
+        employee = dict(organization_id=org_id, full_name='Иванов Иван Иванович', age=32, risk_category='Первая')
+        emp_id = company.save_employee(employee)
+        self.assertIn(org_id, {r['id'] for r in company.organizations()})
+        self.assertIn(emp_id, {r['id'] for r in company.employees_for_organization(org_id)})
+        self.assertNotIn(org_id, {r['id'] for r in other.organizations()})
+        self.assertNotIn(emp_id, {r['id'] for r in other.employees()})
+        with self.assertRaises(ValueError):
+            other.save_employee(employee, emp_id)
+        organization['address'] = 'Минск, ул. Лесная, 7'
+        company.save_organization(organization, org_id)
+        employee['age'] = 33
+        company.save_employee(employee, emp_id)
+        self.assertEqual(company.organizations()[0]['address'], organization['address'])
+        self.assertEqual(company.employees()[0]['age'], 33)
+        with self.assertRaises(ValueError):
+            company.delete_organization(org_id)
+        company.delete_employee(emp_id)
+        company.delete_organization(org_id)
+        self.assertEqual(company.organizations(), [])
+
+    def test_clear_includes_unattached_records(self):
+        company = register_company('Страхование города', '1234')
+        org_id = company.save_organization(dict(organization_code=99982, full_name='ООО Заря',
+            brief_name='Заря', address='Минск', bank_details='BY123456', specialization='Торговля'))
+        employee_id = company.save_employee(dict(organization_id=org_id, full_name='Петров Пётр Петрович',
+                                                 age=40, risk_category='Вторая'))
+        company.clear_data()
+        self.assertEqual(authenticate(company.name, '1234').organizations(), [])
+        with get_connection() as conn:
+            self.assertIsNone(conn.execute('SELECT id FROM Employee WHERE id=?', (employee_id,)).fetchone())
+            self.assertIsNone(conn.execute('SELECT id FROM Organization WHERE id=?', (org_id,)).fetchone())
+
+    def test_shared_records_cannot_be_modified(self):
+        first = authenticate('БелСтрах', '1234')
+        other = authenticate('Надёжный полис', '1234')
+        shared = next(row for row in first.organizations() if row['id'] in {r['id'] for r in other.organizations()})
+        values = {k: v for k, v in shared.items() if k != 'id'}
+        with self.assertRaisesRegex(ValueError, 'другой страховой'):
+            first.save_organization(values, shared['id'])
+        with self.assertRaisesRegex(ValueError, 'другой страховой'):
+            first.delete_organization(shared['id'])
 
     def test_same_organization_does_not_leak_other_insurer_contracts(self):
         with get_connection() as conn:

@@ -126,8 +126,6 @@ class App(tk.Tk):
                               ("Изменить", lambda: self.entity_form(kind, labels, self.selected(tree))),
                               ("Удалить", lambda: self.delete_entity(kind, self.selected(tree))),
                               ("Обновить", lambda: self.refresh(kind)))
-        if kind in ("organizations", "employees"):
-            actions = actions[-1:]
         for label, action in actions:
             ttk.Button(buttons, text=label, command=lambda a=action: self.guard(a)).pack(side="left", padx=3)
         self.refresh(kind)
@@ -144,13 +142,15 @@ class App(tk.Tk):
             tree.insert("", "end", iid=row["id"], values=self.table_values(row.values(), tree["columns"]))
 
     def entity_form(self, kind, labels, item_id=None):
-        if kind not in ("individuals", "agents"):
-            raise ValueError("Редактирование общих справочников недоступно")
         if item_id is not None:
             if kind == "agents":
                 self.tenant.require_agent(item_id)
-            else:
+            elif kind == "individuals":
                 self.tenant.require_individual(item_id)
+            elif kind == "organizations":
+                self.tenant.require_organization(item_id)
+            elif kind == "employees":
+                self.tenant.require_employee(item_id)
         fields = tuple(field for field, _ in FIELDS[kind])
         row = next((r for r in self.tenant.list_items(kind) if r["id"] == item_id), {}) if item_id else {}
         if item_id and not row:
@@ -173,6 +173,8 @@ class App(tk.Tk):
             entry.grid(row=index, column=1, padx=8, pady=4)
             if kind == "agents" and field == "insurance_company":
                 entry.configure(state="readonly")
+            if kind == "employees" and field == "organization_id" and item_id is not None:
+                entry.configure(state="disabled")
             entries[field] = entry
         def save():
             try:
@@ -184,11 +186,16 @@ class App(tk.Tk):
                     if item_id is not None:
                         self.tenant.require_individual(item_id)
                     self.tenant.require_agent(int(values["agent_id"]))
-                else:
+                elif kind == "agents":
                     if item_id is not None:
                         self.tenant.require_agent(item_id)
                     values["insurance_company"] = self.tenant.name
-                save_item(kind, values, item_id)
+                if kind == "organizations":
+                    self.tenant.save_organization(values, item_id)
+                elif kind == "employees":
+                    self.tenant.save_employee(values, item_id)
+                else:
+                    save_item(kind, values, item_id)
                 self.refresh_all(); win.destroy()
                 messagebox.showinfo("Успех", "Запись сохранена", parent=self)
             except (ValueError, sqlite3.Error) as exc:
@@ -196,14 +203,21 @@ class App(tk.Tk):
         ttk.Button(win, text="Сохранить", command=save).grid(columnspan=2, pady=8)
 
     def delete_entity(self, kind, item_id):
-        if kind not in ("agents", "individuals"):
-            raise ValueError("Удаление недоступно")
         if kind == "agents":
             self.tenant.require_agent(item_id)
-        else:
+        elif kind == "individuals":
             self.tenant.require_individual(item_id)
+        elif kind == "organizations":
+            self.tenant.require_organization(item_id)
+        elif kind == "employees":
+            self.tenant.require_employee(item_id)
         if messagebox.askyesno("Удаление", "Удалить выбранную запись?", parent=self):
-            delete_item(kind, item_id)
+            if kind == "organizations":
+                self.tenant.delete_organization(item_id)
+            elif kind == "employees":
+                self.tenant.delete_employee(item_id)
+            else:
+                delete_item(kind, item_id)
             self.refresh_all()
             messagebox.showinfo("Успех", "Запись удалена", parent=self)
 
