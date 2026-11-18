@@ -8,7 +8,7 @@ class Employee:
     def list_all():
         return records("SELECT * FROM Employee ORDER BY id")
 
-    def __init__(self, organization_id: int,full_name: str, age: int, risk_category: str, id: int | None = None):
+    def __init__(self, organization_id: int, full_name: str, age: int, risk_category: str, id: int | None = None):
         self._id = id
         self._organization_id = organization_id
         self.full_name = full_name

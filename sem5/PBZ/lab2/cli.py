@@ -225,19 +225,27 @@ def contract_menu():
         print("\n--- Коллективные договоры ---\n1. Список\n2. Добавить\n3. Изменить\n4. Удалить\n5. Сотрудники договора\n6. Добавить сотрудника\n7. Удалить сотрудника\n0. Назад")
         choice = input("Выберите пункт: ").strip()
         try:
-            if choice == "0": return
-            if choice == "1": show_rows(contracts()); continue
-            if choice == "2": edit_contract(); continue
+            if choice == "0":
+                return
+            if choice == "1":
+                show_rows(contracts())
+                continue
+            if choice == "2":
+                edit_contract()
+                continue
             if choice not in ("3", "4", "5", "6", "7"):
-                print("Неизвестный пункт меню."); continue
+                print("Неизвестный пункт меню.")
+                continue
             row = choose_row(contracts())
-            if not row: continue
+            if not row:
+                continue
             if choice == "3":
                 edit_contract(row)
             elif choice == "4":
                 print("Вместе с договором будут удалены связи с сотрудниками и суммы категорий.")
                 if confirm(row):
-                    Contract.delete_contract(row["id"]); print("Договор удалён.")
+                    Contract.delete_contract(row["id"])
+                    print("Договор удалён.")
                 else:
                     print("Удаление отменено.")
             else:
@@ -249,18 +257,22 @@ def contract_menu():
                     candidates = records("SELECT id,full_name,risk_category FROM Employee WHERE organization_id=? ORDER BY id", (row["organization_id"],))
                     selected = choose_row(candidates, "ID сотрудника: ")
                     if selected:
-                        if selected["id"] in employees: raise ValueError("Сотрудник уже включён в договор")
+                        if selected["id"] in employees:
+                            raise ValueError("Сотрудник уже включён в договор")
                         employees.append(selected["id"])
                         if selected["risk_category"] not in payouts:
                             payouts[selected["risk_category"]] = money(input("Сумма для категории: ").strip())
-                        save_existing(row, employees, payouts); print("Сотрудник добавлен.")
+                        save_existing(row, employees, payouts)
+                        print("Сотрудник добавлен.")
                 else:
                     selected = choose_row(records("""SELECT e.id,e.full_name,e.risk_category FROM Employee e
                         JOIN ContractEmployee ce ON ce.employee_id=e.id WHERE ce.contract_id=?""", (row["id"],)), "ID сотрудника: ")
                     if selected and confirm(selected):
                         employees.remove(selected["id"])
-                        save_existing(row, employees, payouts); print("Сотрудник удалён из договора.")
-                    elif selected: print("Удаление отменено.")
+                        save_existing(row, employees, payouts)
+                        print("Сотрудник удалён из договора.")
+                    elif selected:
+                        print("Удаление отменено.")
         except (ValueError, sqlite3.Error) as exc:
             print(f"Ошибка: {exc}")
 
@@ -270,25 +282,34 @@ def payout_menu():
         print("\n--- Суммы по категориям ---\n1. Показать\n2. Добавить или изменить\n3. Удалить\n0. Назад")
         choice = input("Выберите пункт: ").strip()
         try:
-            if choice == "0": return
+            if choice == "0":
+                return
             if choice not in ("1", "2", "3"):
-                print("Неизвестный пункт меню."); continue
+                print("Неизвестный пункт меню.")
+                continue
             row = choose_row(contracts())
-            if not row: continue
+            if not row:
+                continue
             employees, payouts = contract_data(row)
-            show_rows([{"category": k, "amount": v} for k,v in payouts.items()])
-            if choice == "1": continue
+            show_rows([{"category": k, "amount": v} for k, v in payouts.items()])
+            if choice == "1":
+                continue
             category = input("Категория риска: ").strip()
-            if not category: raise ValueError("Укажите категорию")
+            if not category:
+                raise ValueError("Укажите категорию")
             if choice == "2":
                 payouts[category] = money(input("Сумма: ").strip())
-                save_existing(row, employees, payouts); print("Сумма сохранена.")
+                save_existing(row, employees, payouts)
+                print("Сумма сохранена.")
             else:
-                if category not in payouts: raise ValueError("Категория не найдена")
+                if category not in payouts:
+                    raise ValueError("Категория не найдена")
                 if confirm({"category":category, "amount":payouts[category]}):
                     del payouts[category]
-                    save_existing(row, employees, payouts); print("Сумма удалена.")
-                else: print("Удаление отменено.")
+                    save_existing(row, employees, payouts)
+                    print("Сумма удалена.")
+                else:
+                    print("Удаление отменено.")
         except (ValueError, sqlite3.Error) as exc:
             print(f"Ошибка: {exc}")
 
@@ -298,16 +319,24 @@ def claims_menu():
         print("\n--- Страховые случаи ---\n1. Список\n2. Добавить\n3. Изменить\n4. Удалить\n0. Назад")
         choice = input("Выберите пункт: ").strip()
         try:
-            if choice == "0": return
+            if choice == "0":
+                return
             rows = records("SELECT id,contract_id,employee_id,claim_date,amount,description FROM InsuranceClaim ORDER BY id")
-            if choice == "1": show_rows(rows); continue
+            if choice == "1":
+                show_rows(rows)
+                continue
             if choice not in ("2", "3", "4"):
-                print("Неизвестный пункт меню."); continue
+                print("Неизвестный пункт меню.")
+                continue
             old = choose_row(rows) if choice in ("3", "4") else None
-            if choice in ("3", "4") and not old: continue
+            if choice in ("3", "4") and not old:
+                continue
             if choice == "4":
-                if confirm(old): InsuranceClaim.delete_claim(old["id"]); print("Удалено.")
-                else: print("Удаление отменено.")
+                if confirm(old):
+                    InsuranceClaim.delete_claim(old["id"])
+                    print("Удалено.")
+                else:
+                    print("Удаление отменено.")
                 continue
             show_rows(contracts())
             cid = int(ask_field("ID договора", old["contract_id"] if old else None))
@@ -334,13 +363,14 @@ def report(kind):
     if kind == 1:
         data = Contract.report_contracts(code, selected_date)
         if data["organization"] is None:
-            print("Организация не найдена."); return
+            print("Организация не найдена.")
+            return
         print(f"Дата: {selected_date} | Организация: {data['organization']['full_name']} | Адрес: {data['organization']['address']}")
         show_rows(data["contracts"], {"contract_number":"Номер", "conclusion_date":"Начало", "end_date":"Окончание"})
     elif kind == 2:
         data = Contract.report_agents(code, selected_date)
         print(f"Дата: {selected_date}")
-        show_rows([{k:v for k,v in row.items() if k != "id"} for row in data["agents"]],
+        show_rows([{k:v for k, v in row.items() if k != "id"} for row in data["agents"]],
                   {"insurance_company":"Страховая фирма", "full_name":"ФИО", "phone_number":"Телефон"})
     else:
         data = Contract.report_payouts(selected_date, code)
@@ -356,16 +386,27 @@ def menu():
         print("1. Организации\n2. Страхуемые сотрудники\n3. Страховые агенты\n4. Коллективные договоры\n5. Суммы выплат по категориям\n6. Отчёт: действующие договоры организации\n7. Отчёт: агенты организации\n8. Отчёт: выплаты по категориям\n10. Индивидуальные договоры\n11. Страховые случаи\n0. Выход")
         choice = input("Выберите пункт: ").strip()
         try:
-            if choice == "0": print("До свидания!"); return
-            if choice == "1": entity_menu("organizations", "Организации")
-            elif choice == "2": entity_menu("employees", "Сотрудники")
-            elif choice == "3": entity_menu("agents", "Агенты")
-            elif choice == "4": contract_menu()
-            elif choice == "5": payout_menu()
-            elif choice in ("6", "7", "8"): report(int(choice)-5)
-            elif choice == "10": entity_menu("individuals", "Индивидуальные договоры")
-            elif choice == "11": claims_menu()
-            else: print("Неизвестный пункт меню.")
+            if choice == "0":
+                print("До свидания!")
+                return
+            if choice == "1":
+                entity_menu("organizations", "Организации")
+            elif choice == "2":
+                entity_menu("employees", "Сотрудники")
+            elif choice == "3":
+                entity_menu("agents", "Агенты")
+            elif choice == "4":
+                contract_menu()
+            elif choice == "5":
+                payout_menu()
+            elif choice in ("6", "7", "8"):
+                report(int(choice)-5)
+            elif choice == "10":
+                entity_menu("individuals", "Индивидуальные договоры")
+            elif choice == "11":
+                claims_menu()
+            else:
+                print("Неизвестный пункт меню.")
         except (ValueError, sqlite3.Error) as exc:
             print(f"Ошибка: {exc}")
 

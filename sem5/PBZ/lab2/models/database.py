@@ -3,21 +3,28 @@ import os
 from contextlib import contextmanager
 from pathlib import Path
 
+
 def get_connection():
-    DB_PATH = Path(os.environ.get('INSURANCE_DB_PATH', Path(__file__).resolve().parent.parent / 'data' / 'insurance.db'))
-    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(DB_PATH)
+    db_path = Path(os.environ.get(
+        'INSURANCE_DB_PATH',
+        Path(__file__).resolve().parent.parent / 'data' / 'insurance.db'
+    ))
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(db_path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
+
 
 def init_database():
     connection = get_connection()
     cursor = connection.cursor()
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS InsuranceCompany(
-        name TEXT PRIMARY KEY NOT NULL
-        )''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS InsuranceCompany(
+        name  TEXT PRIMARY KEY NOT NULL
+        )
+    ''')
 
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS Organization(
@@ -86,34 +93,66 @@ def init_database():
         )
     ''')
 
-    cursor.execute('''CREATE TABLE IF NOT EXISTS IndividualContract (
-        id INTEGER PRIMARY KEY, contract_number TEXT NOT NULL UNIQUE,
-        full_name TEXT NOT NULL, agent_id INTEGER NOT NULL REFERENCES Agent(id),
-        conclusion_date TEXT NOT NULL, end_date TEXT NOT NULL, amount TEXT NOT NULL)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS InsuranceClaim (
-        id INTEGER PRIMARY KEY, contract_id INTEGER NOT NULL REFERENCES Contract(id),
-        employee_id INTEGER NOT NULL REFERENCES Employee(id), claim_date TEXT NOT NULL,
-        amount TEXT NOT NULL, description TEXT NOT NULL)''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS InsurerOrganization (
-        company_name TEXT NOT NULL REFERENCES InsuranceCompany(name) ON DELETE CASCADE,
-        organization_id INTEGER NOT NULL REFERENCES Organization(id) ON DELETE CASCADE,
-        PRIMARY KEY (company_name, organization_id))''')
-    cursor.execute('''CREATE TABLE IF NOT EXISTS InsurerEmployee (
-        company_name TEXT NOT NULL REFERENCES InsuranceCompany(name) ON DELETE CASCADE,
-        employee_id INTEGER NOT NULL REFERENCES Employee(id) ON DELETE CASCADE,
-        PRIMARY KEY (company_name, employee_id))''')
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS IndividualContract (
+        id               INTEGER PRIMARY KEY,
+        contract_number  TEXT NOT NULL UNIQUE,
+        full_name        TEXT NOT NULL,
+        agent_id         INTEGER NOT NULL REFERENCES Agent(id),
+        conclusion_date  TEXT NOT NULL,
+        end_date         TEXT NOT NULL,
+        amount           TEXT NOT NULL
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS InsuranceClaim (
+        id           INTEGER PRIMARY KEY,
+        contract_id  INTEGER NOT NULL REFERENCES Contract(id),
+        employee_id  INTEGER NOT NULL REFERENCES Employee(id),
+        claim_date   TEXT NOT NULL,
+        amount       TEXT NOT NULL,
+        description  TEXT NOT NULL
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS InsurerOrganization (
+        company_name     TEXT NOT NULL REFERENCES InsuranceCompany(name) ON DELETE CASCADE,
+        organization_id  INTEGER NOT NULL REFERENCES Organization(id) ON DELETE CASCADE,
+        PRIMARY KEY (company_name, organization_id)
+        )
+    ''')
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS InsurerEmployee (
+        company_name  TEXT NOT NULL REFERENCES InsuranceCompany(name) ON DELETE CASCADE,
+        employee_id   INTEGER NOT NULL REFERENCES Employee(id) ON DELETE CASCADE,
+        PRIMARY KEY (company_name, employee_id)
+        )
+    ''')
+
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_org_dates ON Contract(organization_id, conclusion_date, end_date)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_contract_agent ON Contract(agent_id)')
     cursor.execute('CREATE INDEX IF NOT EXISTS idx_employee_org ON Employee(organization_id)')
     init_triggers(cursor)
-    cursor.execute("INSERT OR IGNORE INTO InsuranceCompany(name) SELECT DISTINCT insurance_company FROM Agent WHERE trim(insurance_company) != ''")
-    cursor.execute('''INSERT OR IGNORE INTO InsurerOrganization
+    cursor.execute('''
+        INSERT OR IGNORE INTO InsuranceCompany(name)
+        SELECT DISTINCT insurance_company FROM Agent
+        WHERE trim(insurance_company) != ''
+    ''')
+    cursor.execute('''
+        INSERT OR IGNORE INTO InsurerOrganization
         SELECT DISTINCT a.insurance_company, c.organization_id FROM Contract c
-        JOIN Agent a ON a.id=c.agent_id JOIN InsuranceCompany i ON i.name=a.insurance_company''')
-    cursor.execute('''INSERT OR IGNORE INTO InsurerEmployee
+        JOIN Agent a ON a.id=c.agent_id JOIN InsuranceCompany i ON i.name=a.insurance_company
+    ''')
+    cursor.execute('''
+        INSERT OR IGNORE INTO InsurerEmployee
         SELECT DISTINCT a.insurance_company, ce.employee_id FROM ContractEmployee ce
         JOIN Contract c ON c.id=ce.contract_id JOIN Agent a ON a.id=c.agent_id
-        JOIN InsuranceCompany i ON i.name=a.insurance_company''')
+        JOIN InsuranceCompany i ON i.name=a.insurance_company
+    ''')
+
     connection.commit()
     connection.close()
     from .format_migration import migrate_legacy_samples
@@ -121,10 +160,10 @@ def init_database():
 
 
 def init_triggers(cursor):
-    """Install integrity checks without modifying existing rows."""
     for action in ("INSERT", "UPDATE OF contract_id, employee_id"):
         suffix = "insert" if action == "INSERT" else "update"
-        cursor.execute(f"""CREATE TRIGGER IF NOT EXISTS contract_employee_org_{suffix}
+        cursor.execute(f"""
+            CREATE TRIGGER IF NOT EXISTS contract_employee_org_{suffix}
             BEFORE {action} ON ContractEmployee
             WHEN EXISTS (
                 SELECT 1 FROM Contract c JOIN Employee e ON e.id = NEW.employee_id
@@ -132,9 +171,11 @@ def init_triggers(cursor):
             )
             BEGIN
                 SELECT RAISE(ABORT, 'Сотрудник принадлежит другой организации');
-            END""")
+            END
+        """)
 
-    cursor.execute("""CREATE TRIGGER IF NOT EXISTS employee_organization_update
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS employee_organization_update
         BEFORE UPDATE OF organization_id ON Employee
         WHEN EXISTS (
             SELECT 1 FROM ContractEmployee ce JOIN Contract c ON c.id = ce.contract_id
@@ -142,9 +183,11 @@ def init_triggers(cursor):
         )
         BEGIN
             SELECT RAISE(ABORT, 'Сотрудник включён в договор другой организации');
-        END""")
+        END
+    """)
 
-    cursor.execute("""CREATE TRIGGER IF NOT EXISTS contract_organization_update
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS contract_organization_update
         BEFORE UPDATE OF organization_id ON Contract
         WHEN EXISTS (
             SELECT 1 FROM ContractEmployee ce JOIN Employee e ON e.id = ce.employee_id
@@ -152,19 +195,23 @@ def init_triggers(cursor):
         )
         BEGIN
             SELECT RAISE(ABORT, 'В договоре есть сотрудники другой организации');
-        END""")
+        END
+    """)
 
     for table in ("Contract", "IndividualContract"):
         for action in ("INSERT", "UPDATE OF conclusion_date, end_date"):
             suffix = "insert" if action == "INSERT" else "update"
-            cursor.execute(f"""CREATE TRIGGER IF NOT EXISTS {table.lower()}_date_order_{suffix}
+            cursor.execute(f"""
+                CREATE TRIGGER IF NOT EXISTS {table.lower()}_date_order_{suffix}
                 BEFORE {action} ON {table}
                 WHEN NEW.end_date < NEW.conclusion_date
                 BEGIN
                     SELECT RAISE(ABORT, 'Дата окончания раньше даты начала');
-                END""")
+                END
+            """)
 
-    cursor.execute("""CREATE TRIGGER IF NOT EXISTS agent_company_update
+    cursor.execute("""
+        CREATE TRIGGER IF NOT EXISTS agent_company_update
         BEFORE UPDATE OF insurance_company ON Agent
         WHEN NEW.insurance_company != OLD.insurance_company AND (
             EXISTS (SELECT 1 FROM Contract WHERE agent_id = OLD.id) OR
@@ -172,7 +219,8 @@ def init_triggers(cursor):
         )
         BEGIN
             SELECT RAISE(ABORT, 'Нельзя изменить страховую компанию агента с договорами');
-        END""")
+        END
+    """)
 
 
 @contextmanager

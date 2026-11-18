@@ -255,7 +255,7 @@ class Contract:
                     AND c.conclusion_date <= ?
                     AND c.end_date >= ?
                 WHERE o.organization_code = ?
-                ''',(selected_date, selected_date, code)).fetchall()
+                ''', (selected_date, selected_date, code)).fetchall()
         finally:
             conn.close()
 
@@ -296,7 +296,7 @@ class Contract:
                     AND c.conclusion_date <= ?
                     AND c.end_date >= ?
                 ORDER BY a.full_name
-            ''',(code, selected_date, selected_date)
+            ''', (code, selected_date, selected_date)
             ).fetchall()
         finally:
             conn.close()
@@ -334,7 +334,7 @@ class Contract:
                 AND c.conclusion_date <= ?
                 AND c.end_date >= ?
             ORDER BY p.payout_amount
-            ''', (code ,selected_date, selected_date)).fetchall()
+            ''', (code , selected_date, selected_date)).fetchall()
         finally:
             conn.close()
 
@@ -355,7 +355,8 @@ class Contract:
     @staticmethod
     def save_contract(number, organization_id, agent_id, start, end, employee_ids, payouts, contract_id=None):
         number = required_text(number, "номер договора")
-        Contract.validate_date(start); Contract.validate_date(end)
+        Contract.validate_date(start)
+        Contract.validate_date(end)
         if start > end:
             raise ValueError("Дата окончания раньше даты начала")
         if not employee_ids or len(employee_ids) != len(set(employee_ids)):
@@ -427,7 +428,7 @@ class Contract:
                    c.conclusion_date, c.end_date
             FROM Payout p JOIN Contract c ON c.id=p.contract_id JOIN Organization o ON o.id=c.organization_id
             WHERE c.conclusion_date<=? AND c.end_date>=?"""
-        params = [selected_date,selected_date]
+        params = [selected_date, selected_date]
         if code is not None:
             query += " AND o.organization_code=?"
             params.append(code)

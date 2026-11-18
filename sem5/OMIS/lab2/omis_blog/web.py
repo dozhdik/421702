@@ -6,11 +6,13 @@ import html
 import re
 import sqlite3
 import time
+from collections import Counter
+from datetime import timedelta
 from pathlib import Path
 from email.parser import BytesParser
 from email.policy import default
 from typing import Any, Callable
-from urllib.parse import parse_qs, quote
+from urllib.parse import parse_qs, urlencode
 
 from omis_blog import domain as d
 from omis_blog.auth import authenticate, has_permission, register_author, role
@@ -29,21 +31,25 @@ def render_markdown(value: str) -> str:
         if paragraph:
             blocks.append("<p>" + "<br>".join(paragraph) + "</p>")
             paragraph.clear()
+    def inline(text: str) -> str:
+        return re.sub(r'\*\*([^*]+)\*\*|\*([^*]+)\*',
+                      lambda match: f'<strong>{match[1]}</strong>' if match[1] else f'<em>{match[2]}</em>',
+                      escape_html(text))
     for line in value.splitlines():
         line = line.strip()
         if not line:
             flush()
         elif line.startswith("### "):
             flush()
-            blocks.append("<h3>" + escape_html(line[4:]) + "</h3>")
+            blocks.append("<h3>" + inline(line[4:]) + "</h3>")
         elif line.startswith("## "):
             flush()
-            blocks.append("<h2>" + escape_html(line[3:]) + "</h2>")
+            blocks.append("<h2>" + inline(line[3:]) + "</h2>")
         elif line.startswith("# "):
             flush()
-            blocks.append("<h2>" + escape_html(line[2:]) + "</h2>")
+            blocks.append("<h2>" + inline(line[2:]) + "</h2>")
         else:
-            paragraph.append(escape_html(line))
+            paragraph.append(inline(line))
     flush()
     return "".join(blocks)
 
@@ -129,12 +135,12 @@ class WebApp:
         if path == "/article/save" and data.get("action") != "autosave":
             try:
                 self._require("article.write")
-                return status, self._page("Редактор статьи", self._editor(data.get("id") or "new", data, alert)), []
+                return status, self._page("Редактор публикации", self._editor(data.get("id") or "new", data, alert), layout="editor"), []
             except (d.DomainException, ValueError):
                 pass
         if path.startswith("/moderation/") and has_permission(self.db, self.account, "article.moderate"):
             self.params["filter"] = "complaints" if "/complaint/" in path else "articles"
-            return status, self._page("Кабинет редактора", alert + self._moderation(data)), []
+            return status, self._page("Кабинет редактора", alert + self._moderation(data), layout="moderation"), []
         if path.startswith("/admin/") and has_permission(self.db, self.account, "admin"):
             return status, self._page("Администрирование", alert + self._admin(data, path)), []
         return status, self._page("Ошибка", alert), []
@@ -209,8 +215,8 @@ class WebApp:
         current = ' aria-current="page"' if active else ""
         return f'<a href="{target}"{classes}{current}>{escape_html(label)}</a>'
 
-    def _header(self) -> str:
-        nav = [self._navigation_link("Статьи", "/")]
+    def _header(self, layout: str) -> str:
+        nav = [self._navigation_link("Лента публикаций", "/")]
         if self.account:
             if has_permission(self.db, self.account, "article.write"):
                 nav.append(self._navigation_link("Мои статьи", "/my-articles"))
@@ -236,32 +242,47 @@ class WebApp:
             account_actions = (self._navigation_link("Войти", "/login", "button button-quiet")
                                + self._navigation_link("Регистрация", "/register", "button button-primary"))
         writing_action = ""
-        if has_permission(self.db, self.account, "article.write"):
+        if not layout and has_permission(self.db, self.account, "article.write"):
             writing_action = self._navigation_link("Написать статью", "/editor/new", "button button-primary")
+        context = {
+            "editor": '<a href="/my-articles">Мои статьи</a><span class="workspace-title">Редактор публикации</span>'
+                      '<span id="autosave" class="muted" role="status" aria-live="polite">Автосохранение</span>',
+            "moderation": '<span class="workspace-title">Панель модератора</span>',
+            "reading": '<a class="back-to-feed" href="/">← К ленте</a>',
+        }.get(layout, "")
+        search = ""
+        if layout == "feed":
+            search = (f'<form class="header-search" method="get" action="/" role="search">'
+                      f'<input name="q" type="search" aria-label="Поиск по статьям" placeholder="Поиск по статьям" value="{escape_html(self.params.get("q"))}">'
+                      + ''.join(f'<input type="hidden" name="{key}" value="{escape_html(self.params.get(key))}">'
+                                for key in ("author", "rubric", "tag"))
+                      + '<button type="submit">Найти</button></form>')
         return (
             '<header class="site-header"><div class="header-inner">'
             '<a class="brand" href="/" aria-label="Корпоративный блог — главная">'
-            '<span class="brand-mark" aria-hidden="true">✦</span><span>Корпоративный блог</span></a>'
-            f'<nav class="primary-navigation" aria-label="Основная навигация">{"".join(nav)}</nav>'
-            f'<div class="header-actions">{writing_action}{account_actions}</div>'
+            '<span class="brand-mark" aria-hidden="true">КБ</span><span>КОРП-БЛОГ</span></a>'
+            + (f'<div class="header-context">{context}</div>' if context else
+               f'<nav class="primary-navigation" aria-label="Основная навигация">{"".join(nav)}</nav>')
+            + f'<div class="header-actions">{search}{writing_action}{account_actions}</div>'
             '</div></header>'
         )
 
-    def _page(self, title: str, body: str, subtitle: str = "") -> str:
+    def _page(self, title: str, body: str, subtitle: str = "", layout: str = "") -> str:
         role_name = role(self.db, self.account)
         role_display = f'<p class="role-label">{escape_html(role_label(role_name))}</p>' if role_name else ""
         subtitle_html = f'<p class="page-subtitle">{escape_html(subtitle)}</p>' if subtitle else ""
+        heading = (f'<header class="page-heading"><h1>{escape_html(title)}</h1>{subtitle_html}{role_display}</header>'
+                   if not layout else f'<h1 class="visually-hidden">{escape_html(title)}</h1>' if layout != "reading" else "")
+        footer = ('<footer class="site-footer"><div class="footer-inner">'
+                  '<span>Корпоративный блог</span><span>Идеи, новости и опыт нашей команды</span>'
+                  '</div></footer>') if not layout else ''
         return (
             '<!doctype html><html lang="ru"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
             f'<title>{escape_html(title)} · Корпоративный блог</title>'
-            '<link rel="stylesheet" href="/assets/site.css"></head><body>'
-            f'{self._header()}<main class="site-main"><header class="page-heading">'
-            f'<h1>{escape_html(title)}</h1>{subtitle_html}{role_display}</header>'
-            f'<div class="page-content">{body}</div></main>'
-            '<footer class="site-footer"><div class="footer-inner">'
-            '<span>Корпоративный блог</span><span>Идеи, новости и опыт нашей команды</span>'
-            '</div></footer></body></html>'
+            f'<link rel="stylesheet" href="/assets/site.css"></head><body class="{"prototype-page layout-" + layout if layout else ""}">'
+            f'{self._header(layout)}<main class="site-main">{heading}'
+            f'<div class="page-content">{body}</div></main>{footer}</body></html>'
         )
 
     @staticmethod
@@ -276,19 +297,18 @@ class WebApp:
         if path in ("/login", "/register"):
             return "200 OK", self._page("Вход" if path == "/login" else "Регистрация", self._auth_form(path, {})), []
         if path == "/":
-            return "200 OK", self._page("Корпоративный блог", self._feed(),
-                                        "Новости, идеи и опыт нашей команды"), []
+            return "200 OK", self._page("Лента статей", self._feed(), layout="feed"), []
         if path == "/my-articles":
             self._require("article.write")
             return "200 OK", self._page("Мои статьи", self._my_articles()), []
         if path.startswith("/article/"):
-            return "200 OK", self._page("Статья", self._article(path.split("/")[2])), []
+            return "200 OK", self._page("Статья", self._article(path.split("/")[2]), layout="reading"), []
         if path.startswith("/editor/"):
             self._require("article.write")
-            return "200 OK", self._page("Редактор статьи", self._editor(path.split("/")[2])), []
+            return "200 OK", self._page("Редактор публикации", self._editor(path.split("/")[2]), layout="editor"), []
         if path == "/moderation":
             self._require("article.moderate")
-            return "200 OK", self._page("Кабинет редактора", self._moderation()), []
+            return "200 OK", self._page("Кабинет редактора", self._moderation(), layout="moderation"), []
         if path == "/admin":
             self._require("admin")
             return "200 OK", self._page("Администрирование", self._admin()), []
@@ -308,7 +328,10 @@ class WebApp:
         author = self.params.get("author", "")
         rubric = self.params.get("rubric", "")
         tag = self.params.get("tag", "")
-        articles = self.feed.search(query, author, rubric, tag, page, 10)
+        published = self.feed.article_repository.get_recent_publications()
+        matching = self.feed.search(query, author, rubric, tag, size=len(published))
+        page_count = max(1, (len(matching) + 9) // 10)
+        articles = matching[(page - 1) * 10:page * 10]
         view = self.app.views[0]
         view.state.current_page = page
         view.state.selected_filter = rubric
@@ -316,71 +339,91 @@ class WebApp:
         self.ui.feed_updated_at = d.utc_now()
         if rubric:
             self.ui.filter_applied_at = d.utc_now()
-        options = '<option value="">Все рубрики</option>' + "".join(
-            f'<option value="{escape_html(r.category_id)}" {"selected" if r.category_id == rubric else ""}>{escape_html(r.name)}</option>'
-            for r in self.db.list_entities(d.Category))
-        body = (f'<form class="search-panel" method="get" role="search">'
-                '<label>Поиск по статьям<input name="q" type="search" placeholder="Тема или слово" '
-                f'value="{escape_html(query)}"></label>'
-                '<label>Автор<input name="author" placeholder="Имя автора" '
-                f'value="{escape_html(author)}"></label>'
-                '<label>Тег<input name="tag" placeholder="Например, команда" '
-                f'value="{escape_html(tag)}"></label>'
-                f'<label>Рубрика<select name="rubric">{options}</select></label>'
-                '<button class="button button-primary" type="submit">Найти</button></form>')
+        categories = self.db.list_entities(d.Category, order="name")
+
+        def feed_link(**changes: str | int) -> str:
+            fields = {"q": query, "author": author, "rubric": rubric, "tag": tag, **changes}
+            return escape_html("/?" + urlencode({key: value for key, value in fields.items() if value}))
+
+        category_marker = ' aria-current="true"'
+        chips = "".join(
+            f'<a class="filter-chip" href="{feed_link(rubric=key)}"'
+            f'{category_marker if key == rubric else ""}>{escape_html(label)}</a>'
+            for key, label in [("", "Все рубрики"), *((item.category_id, item.name) for item in categories)])
+        write = ('<a class="button button-success" href="/editor/new">+ Написать статью</a>'
+                 if has_permission(self.db, self.account, "article.write") else '')
+        body = (f'<div class="feed-filter-bar"><nav aria-label="Рубрики">{chips}</nav>{write}</div>'
+                f'<details class="advanced-search"{" open" if author or tag else ""}><summary>Фильтры поиска</summary>'
+                '<form method="get" action="/" aria-label="Фильтры поиска">'
+                f'<input type="hidden" name="q" value="{escape_html(query)}">'
+                f'<input type="hidden" name="rubric" value="{escape_html(rubric)}">'
+                f'<label>Автор<input name="author" value="{escape_html(author)}"></label>'
+                f'<label>Тег<input name="tag" value="{escape_html(tag)}"></label>'
+                '<button type="submit">Применить</button><a href="/">Сбросить</a></form></details>'
+                '<div class="feed-columns"><section class="feed-list" aria-label="Публикации">')
         if articles:
-            body += self._article_card(articles[0], featured=True)
-            remaining_articles = articles[1:]
-            if remaining_articles:
-                body += '<section class="feed-section" aria-labelledby="feed-list-heading">'
-                body += '<h2 id="feed-list-heading" class="section-heading">Свежие публикации</h2>'
-                body += '<div class="article-grid">'
-                body += "".join(self._article_card(article) for article in remaining_articles)
-                body += '</div></section>'
-        if not articles:
+            body += "".join(self._article_card(article) for article in articles)
+        else:
             body += ('<section class="empty-state" aria-live="polite"><h2>По этому запросу пока ничего нет</h2>'
                      '<p>Измените слова поиска или выберите другую рубрику.</p>'
                      '<a class="button button-secondary" href="/">Сбросить фильтры</a></section>')
-        if page > 1:
-            body += (f'<a class="pagination-link" href="?page={page-1}&q={quote(query)}&author={quote(author)}'
-                     f'&rubric={quote(rubric)}&tag={quote(tag)}">Назад</a> ')
-        if len(articles) == 10:
-            body += (f'<a class="pagination-link" href="?page={page+1}&q={quote(query)}&author={quote(author)}'
-                     f'&rubric={quote(rubric)}&tag={quote(tag)}">Следующая страница</a>')
-        return body
+        if articles:
+            current_marker = ' aria-current="page"'
+            body += '<nav class="feed-pagination" aria-label="Страницы ленты">'
+            if page > 1:
+                body += f'<a href="{feed_link(page=page-1)}">Назад</a>'
+            for index in range(max(1, page - 2), min(page_count, page + 2) + 1):
+                body += f'<a href="{feed_link(page=index)}"{current_marker if index == page else ""}>{index}</a>'
+            if page < page_count:
+                body += f'<a href="{feed_link(page=page+1)}">Далее</a>'
+            body += '</nav>'
+        tag_counts = Counter(item.keyword for article in published for item in self.db.get_article_tags(article.article_id))
+        popular = "".join(f'<a href="{feed_link(tag=keyword)}">#{escape_html(keyword)} <span>{count}</span></a>'
+                          for keyword, count in tag_counts.most_common(5))
+        week_start = d.utc_now() - timedelta(days=7)
+        recent = sum(item.published_at is not None and item.published_at >= week_start for item in published)
+        author_views: Counter[str] = Counter()
+        for item in published:
+            author_views[item.author_id] += item.view_count
+        leading = author_views.most_common(1)
+        leading_author = self.db.get(d.ContentAuthor, leading[0][0]) if leading and leading[0][1] > 0 else None
+        links = (self._navigation_link("Мои статьи", "/my-articles")
+                 if has_permission(self.db, self.account, "article.write") else '')
+        if self.account:
+            links += self._navigation_link("Уведомления", "/notifications")
+        else:
+            links = self._navigation_link("Вход", "/login") + self._navigation_link("Регистрация", "/register")
+        return (body + '</section><aside class="feed-sidebar" aria-label="Дополнительно">'
+                '<section class="prototype-panel"><h2>Популярные рубрики</h2>'
+                f'<div class="tag-cloud">{popular or "Пока нет популярных тегов."}</div></section>'
+                '<section class="prototype-panel"><h2>Статистика активности</h2><dl class="feed-stats">'
+                f'<div><dt>Статей за неделю</dt><dd>{recent}</dd></div>'
+                f'<div><dt>Самый читаемый автор</dt><dd>{escape_html(leading_author.full_name if leading_author else "—")}</dd></div>'
+                '</dl></section>'
+                f'<section class="prototype-panel"><h2>Быстрые ссылки</h2><div class="sidebar-links">{links}</div></section></aside></div>')
 
-    def _article_card(self, article: d.Article, featured: bool = False) -> str:
+    def _article_card(self, article: d.Article) -> str:
         author = self.db.get(d.ContentAuthor, article.author_id)
         category = self.db.get(d.Category, article.category_id)
         category_name = category.name if category else "Блог"
         options = self.db.list_entities(d.FormattingOptions, 'article_id=?', (article.article_id,))
         show_preview = options[0].has_preview if options else True
         reactions = len(self.db.list_entities(d.Reaction, 'article_id=?', (article.article_id,)))
-        comments = len(self.db.list_entities(d.Comment, 'article_id=?', (article.article_id,)))
+        comments = len(self.db.list_entities(d.Comment, 'article_id=? AND status=?',
+                                             (article.article_id, d.CommentStatus.VISIBLE.value)))
         preview_text = article.summary or re.sub(r"[#*]", "", article.content)[:220]
-        read_minutes = max(1, round(len(article.content.split()) / 180))
-        theme = article.cover_theme if article.cover_theme in ("indigo", "sky", "emerald", "amber", "rose") else "indigo"
-        media = next((item for item in self.db.list_entities(
-            d.MediaAttachment, 'article_id=?', (article.article_id,))
-            if item.content_type.startswith("image/")), None)
-        cover = (f'<img class="cover-image" src="/media/{escape_html(media.media_id)}" '
-                 f'alt="Иллюстрация к статье: {escape_html(article.title)}">' if media else
-                 '<span class="cover-symbol" aria-hidden="true">✦</span>')
         date = article.published_at.date().isoformat() if article.published_at else ""
-        read_label = f'{read_minutes} мин чтения'
-        featured_class = " featured-card" if featured else ""
+        department = f' ({escape_html(author.department)})' if author and author.department else ''
+        url = f'/article/{escape_html(article.article_id)}'
         return (
-            f'<article class="article-card{featured_class}">'
-            f'<a class="card-cover cover-{theme}" href="/article/{escape_html(article.article_id)}" '
-            f'aria-label="Открыть статью: {escape_html(article.title)}">'
-            f'<span class="cover-category">{escape_html(category_name)}</span>{cover}</a>'
-            '<div class="card-content">'
-            f'<p class="eyebrow">{escape_html(category_name)}</p>'
-            f'<h2><a href="/article/{escape_html(article.article_id)}">{escape_html(article.title)}</a></h2>'
+            '<article class="prototype-panel feed-card"><header>'
+            f'<h2><a href="{url}">{escape_html(article.title)}</a></h2>'
+            f'<span class="category-pill">{escape_html(category_name)}</span></header>'
+            f'<p class="card-meta">{escape_html(author.full_name if author else "Автор")}{department} · {escape_html(date)}</p>'
             + (f'<p class="article-excerpt">{escape_html(preview_text)}</p>' if show_preview else '')
-            + f'<p class="card-meta">{escape_html(author.full_name if author else "")} · {escape_html(date)} · {read_label}</p>'
-            + f'<p class="card-counts"><span>{reactions} реакций</span><span>{comments} комментариев</span></p>'
-            + '</div></article>'
+            + f'<footer><a href="{url}">Читать далее →</a>'
+            + f'<span class="card-counts"><span>👍 {reactions}<span class="visually-hidden"> реакций</span></span>'
+            + f'<span>▤ {comments}<span class="visually-hidden"> комментариев</span></span></span></footer></article>'
         )
 
     def _my_articles(self) -> str:
@@ -447,42 +490,58 @@ class WebApp:
         category = self.db.get(d.Category, article.category_id)
         author_record = self.db.get(d.ContentAuthor, article.author_id)
         article_date = article.published_at.date().isoformat() if article.published_at else ""
-        body = (f'<article class="article-reading"><p class="eyebrow">{escape_html(category.name if category else "Блог")}</p>'
-                f'<h2 class="reading-title">{escape_html(article.title)}</h2>'
-                f'<p class="article-summary">{escape_html(article.summary)}</p>'
+        body = (f'<article class="article-reading"><header class="prototype-panel reading-heading">'
+                f'<p class="category-pill">{escape_html(category.name if category else "Блог")}</p>'
+                f'<h1 class="reading-title">{escape_html(article.title)}</h1>'
+                + (f'<p class="article-summary">{escape_html(article.summary)}</p>' if article.summary else '') +
                 '<div class="article-byline">'
                 f'<span>{escape_html(author_record.full_name if author_record else "Автор")}</span>'
                 f'<time datetime="{escape_html(article.published_at.isoformat() if article.published_at else "")}">{escape_html(article_date)}</time>'
-                '</div>'
+                f'<span>Просмотры: {article.view_count}</span></div>')
+        if article.publication_status != d.ArticleStatus.PUBLISHED:
+            body += f'<p class="muted">Статус: {escape_html(status_label(article.publication_status))}</p>'
+        body += ('</header><section class="prototype-panel reading-content" aria-label="Текст статьи">'
                 f'<div class="article-body font-{font}" style="font-family:{font}">{render_markdown(article.content)}</div>')
-        if author and author.author_id == article.author_id or has_permission(self.db, self.account, "article.moderate"):
-            body += f'<p class="muted">Статус: {escape_html(status_label(article.publication_status))} · просмотры: {article.view_count}</p>'
-        body += '<p>Теги: ' + ', '.join(escape_html(tag.keyword) for tag in self.db.get_article_tags(article_id)) + '</p>'
+        tags = self.db.get_article_tags(article_id)
+        if tags:
+            body += '<p class="muted">Теги: ' + ', '.join(escape_html(tag.keyword) for tag in tags) + '</p>'
         for media in self.db.list_entities(d.MediaAttachment, 'article_id=?', (article_id,)):
             if media.content_type.startswith("image/"):
                 body += (f'<figure class="article-media"><img src="/media/{escape_html(media.media_id)}" '
                          f'alt="Иллюстрация к статье: {escape_html(article.title)}"></figure>')
             body += f'<p><a href="/media/{escape_html(media.media_id)}">Вложение: {escape_html(media.file_url)}</a></p>'
+        body += '</section>'
         if article.publication_status == d.ArticleStatus.PUBLISHED:
             reactions = self.db.list_entities(d.Reaction, 'article_id=?', (article_id,))
             comments = self.db.list_entities(d.Comment, 'article_id=?', (article_id,), 'added_at')
             visible_comments = [comment for comment in comments if comment.status == d.CommentStatus.VISIBLE]
-            body += (f'<section class="article-engagement" aria-label="Обсуждение статьи">'
-                     f'<span>{len(reactions)} реакций</span><span>{len(visible_comments)} комментариев</span></section>')
-            if self.account:
+            counts = Counter(item.reaction_type for item in reactions)
+            options = ((d.ReactionType.LIKE, "👍 Нравится"), (d.ReactionType.HELPFUL, "★ Полезно"))
+            body += '<section class="article-engagement" aria-label="Реакции">'
+            if has_permission(self.db, self.account, "reaction.write"):
+                reader = self._profile(d.Reader)
+                selected = next((item.reaction_type for item in reactions if reader and item.reader_id == reader.reader_id), None)
                 body += (f'<form method="post" action="/article/{escape_html(article_id)}/react">{self._csrf()}'
-                         '<label>Ваша реакция<select name="type"><option value="like">Нравится</option>'
-                         '<option value="helpful">Полезно</option></select></label>'
-                         '<button class="button button-secondary" type="submit">Отметить</button></form>')
+                         + ''.join(f'<button name="type" value="{kind.value}" aria-pressed="{str(kind == selected).lower()}">'
+                                   f'{label} · {counts[kind]}</button>' for kind, label in options) + '</form>')
+            else:
+                body += ''.join(f'<span>{label} · {counts[kind]}</span>' for kind, label in options)
+            body += '</section>'
             self.app.views[3].display_comments(comments)
-            body += f'<section class="comments-section"><h2>Обсуждение <span class="heading-count">{len(visible_comments)}</span></h2>'
+            can_comment = has_permission(self.db, self.account, "comment.write")
+            body += f'<section class="comments-section prototype-panel"><h2>Комментарии <span class="heading-count">{len(visible_comments)}</span></h2>'
             if not visible_comments:
                 body += '<p class="empty-state">Пока нет комментариев. Начните обсуждение.</p>'
             for comment in comments:
                 text = escape_html(comment.text) if comment.status == d.CommentStatus.VISIBLE else '[Комментарий скрыт]'
                 reply_class = " comment-reply" if comment.parent_id else ""
+                commenter = self.db.get(d.Reader, comment.reader_id) if comment.status == d.CommentStatus.VISIBLE else None
+                username = commenter.full_name if commenter else "Комментарий"
+                author_badge = ('<span class="category-pill">Автор</span>' if commenter and commenter.user_id and author_record and
+                                commenter.user_id == author_record.user_id else '')
                 body += (f'<article class="comment-card{reply_class}" id="c-{escape_html(comment.comment_id)}">'
-                         f'<p>{text}</p>')
+                         f'<header><strong>{escape_html(username)}</strong>{author_badge}'
+                         f'<time datetime="{escape_html(comment.added_at.isoformat())}">{escape_html(comment.added_at.date())}</time></header>')
                 if comment.parent_id:
                     parent = self.db.get(d.Comment, comment.parent_id)
                     parent_label = (
@@ -491,21 +550,22 @@ class WebApp:
                         else "скрытый комментарий"
                     )
                     body += f'<small class="reply-context">В ответ на: {escape_html(parent_label)}</small>'
-                if self.account and comment.status == d.CommentStatus.VISIBLE:
-                    body += (f'<form method="post" action="/article/{escape_html(article_id)}/comment">{self._csrf()}'
+                body += f'<p>{text}</p>'
+                if can_comment and comment.status == d.CommentStatus.VISIBLE:
+                    body += (f'<details><summary>Ответить</summary><form method="post" action="/article/{escape_html(article_id)}/comment">{self._csrf()}'
                              f'<input type="hidden" name="parent" value="{escape_html(comment.comment_id)}">'
                              '<label>Ответ<textarea name="text" required rows="2"></textarea></label>'
-                             '<button class="button button-quiet" type="submit">Ответить</button></form>'
-                             f'<form method="post" action="/article/{escape_html(article_id)}/report">{self._csrf()}'
+                             '<button class="button button-quiet" type="submit">Отправить ответ</button></form></details>'
+                             f'<details><summary>Пожаловаться</summary><form method="post" action="/article/{escape_html(article_id)}/report">{self._csrf()}'
                              f'<input type="hidden" name="comment" value="{escape_html(comment.comment_id)}">'
                              '<label>Причина жалобы<input name="reason" required></label>'
-                             '<button class="button button-quiet" type="submit">Пожаловаться</button></form>')
+                             '<button class="button button-quiet" type="submit">Отправить жалобу</button></form></details>')
                 body += '</article>'
-            if self.account:
+            if can_comment:
                 body += (f'<form method="post" action="/article/{escape_html(article_id)}/comment">{self._csrf()}'
                          '<label>Ваш комментарий<textarea name="text" required rows="4"></textarea></label>'
                          '<button class="button button-primary" type="submit">Отправить комментарий</button></form>')
-            else:
+            elif not self.account:
                 body += '<p class="login-prompt">Чтобы присоединиться к обсуждению, <a href="/login">войдите в аккаунт</a>.</p>'
             body += '</section>'
         if has_permission(self.db, self.account, "article.moderate") and article.publication_status in (
@@ -559,25 +619,41 @@ class WebApp:
             tags = data.get("tags", "")
             font = data.get("font", "system")
             preview = data.get("preview") == "on"
-        body = (f'<form id="editor" method="post" action="/article/save" enctype="multipart/form-data">{self._csrf()}{alert}'
+        attachments = []
+        detached_forms = []
+        if article_id != "new":
+            for media in self.db.list_entities(d.MediaAttachment, 'article_id=?', (article.article_id,)):
+                media_id = escape_html(media.media_id)
+                attachments.append(f'<li><a href="/media/{media_id}">{escape_html(media.file_url)}</a>'
+                                   f'<button type="submit" form="remove-{media_id}">Удалить вложение</button></li>')
+                detached_forms.append(f'<form id="remove-{media_id}" method="post" action="/media/{media_id}/delete">'
+                                      f'{self._csrf()}</form>')
+        body = (f'<form id="editor" class="editor-workspace" method="post" action="/article/save" enctype="multipart/form-data">{self._csrf()}{alert}'
                 f'<input type="hidden" name="id" value="{escape_html(article_id if article_id != "new" else "")}">'
-                f'<label>Заголовок<input name="title" value="{escape_html(article.title)}"></label>'
-                f'<label>Содержание<textarea name="content">{escape_html(article.content)}</textarea></label>'
+                '<section class="prototype-panel editor-fields" aria-label="Поля статьи">'
+                f'<label>Заголовок статьи<input name="title" value="{escape_html(article.title)}"></label>'
+                '<div class="editor-field-row">'
                 f'<label>Рубрика<select name="rubric">{rubric_options}</select></label>'
-                f'<label>Теги через запятую<input name="tags" value="{escape_html(tags)}"></label>'
+                f'<label>Теги (через запятую)<input name="tags" value="{escape_html(tags)}"></label></div>'
+                '</section><section class="prototype-panel editor-canvas" aria-label="Содержание и вложения">'
+                '<div class="editor-tools" role="group" aria-label="Форматирование">'
+                '<button type="button" data-markdown="bold" aria-label="Полужирный"><strong>Ж</strong></button>'
+                '<button type="button" data-markdown="italic" aria-label="Курсив"><em>К</em></button>'
+                '<button type="button" data-markdown="heading" aria-label="Подзаголовок">H₂</button>'
                 f'<label>Шрифт<select name="font"><option value="system" {"selected" if font == "system" else ""}>Системный</option>'
                 f'<option value="serif" {"selected" if font == "serif" else ""}>С засечками</option></select></label>'
-                f'<label><input type="checkbox" name="preview" {"checked" if preview else ""}>Показывать превью</label>'
-                '<label>Медиавложение (PNG, JPEG, PDF; до 5 МБ)<input type="file" name="media" accept="image/png,image/jpeg,application/pdf"></label>'
-                '<button name="action" value="draft">Сохранить черновик</button> '
-                '<button class="primary" name="action" value="submit">Отправить на модерацию</button>'
-                '<span id="autosave" class="muted" role="status" aria-live="polite">Не сохранено автоматически</span></form>')
+                f'<label class="editor-preview"><input type="checkbox" name="preview" {"checked" if preview else ""}>Превью в ленте</label></div>'
+                f'<label class="editor-text"><span class="visually-hidden">Содержание</span><textarea name="content" placeholder="Начните писать статью…">{escape_html(article.content)}</textarea></label>'
+                '<section class="editor-attachments"><h2>Прикреплённые файлы</h2>'
+                + (f'<ul>{"".join(attachments)}</ul>' if attachments else '<p class="muted">Файлы пока не прикреплены.</p>')
+                + '<label>Добавить файл (PNG, JPEG, PDF; до 5 МБ)<input type="file" name="media" accept="image/png,image/jpeg,application/pdf"></label>'
+                '</section></section><div class="editor-action-bar">'
+                f'<span class="muted">Статус: {escape_html(status_label(article.publication_status))}</span>'
+                '<div><button name="action" value="draft">Сохранить черновик</button> '
+                '<button class="button-success" name="action" value="submit">Отправить на модерацию</button></div>'
+                '</div></form>' + ''.join(detached_forms))
         if article_id != "new":
             body += self._delete_form(article.article_id)
-            for media in self.db.list_entities(d.MediaAttachment, 'article_id=?', (article.article_id,)):
-                body += (f'<p><a href="/media/{escape_html(media.media_id)}">{escape_html(media.file_url)}</a> '
-                         f'<form class="inline" method="post" action="/media/{escape_html(media.media_id)}/delete">'
-                         f'{self._csrf()}<button>Удалить вложение</button></form></p>')
             for note in self.db.list_entities(d.EditorRemark, 'article_id=?', (article.article_id,)):
                 body += f'<article><strong>Замечание редактора:</strong> {escape_html(note.remark_text)}</article>'
         body += '<script src="/assets/editor.js"></script>'
@@ -601,26 +677,54 @@ class WebApp:
                                      'processed_at IS NULL AND article_id IN '
                                      '(SELECT article_id FROM Article WHERE deleted_at IS NULL)',
                                      order='priority DESC, received_at')
-            body += '<h2>Статьи</h2>'
-            if not tickets:
-                body += '<p class="empty-state">Материалов на модерации нет.</p>'
-            for ticket in tickets:
-                article = self.db.get(d.Article, ticket.article_id)
-                if article is None:
-                    continue
-                author = self.db.get(d.ContentAuthor, article.author_id)
-                body += (f'<article class="list-card management-card"><h3>{escape_html(article.title)}</h3>'
-                         f'<p class="muted">{escape_html(author.full_name if author else "Автор")} · '
-                         f'{escape_html(ticket.received_at.date())} · приоритет {ticket.priority} · '
-                         f'{escape_html(status_label(article.publication_status))}</p>'
-                         f'<p>{escape_html(article.content)}</p><a href="/article/{escape_html(article.article_id)}">Открыть статью и вложения</a>'
-                         f'<form method="post" action="/moderation/priority/{escape_html(ticket.queue_entry_id)}">{self._csrf()}'
-                         f'<label>Приоритет <input type="number" min="0" max="10" name="priority" value="{ticket.priority}"></label>'
+            rows = [(ticket, article) for ticket in tickets if (article := self.db.get(d.Article, ticket.article_id))]
+            body += (f'<section class="prototype-panel queue-panel"><h2 id="queue-title">Очередь модерации '
+                     f'<span class="heading-count">{len(rows)}</span></h2>')
+            if not rows:
+                body += '<p class="empty-state">Материалов на модерации нет.</p></section>'
+            else:
+                target = self.current_path.rsplit('/', 1)[-1] if data is not None else self.params.get('article')
+                current_ticket, current_article = next(
+                    (entry for entry in rows if target in (entry[0].queue_entry_id, entry[1].article_id)), rows[0])
+                body += ('<div class="queue-scroll" tabindex="0" role="region" aria-labelledby="queue-title"><table class="queue-table">'
+                         '<thead><tr><th scope="col">ID</th><th scope="col">Заголовок</th><th scope="col">Автор</th>'
+                         '<th scope="col">Подразделение</th><th scope="col">Дата подачи</th><th scope="col">Статус</th></tr></thead><tbody>')
+                for ticket, article in rows:
+                    author = self.db.get(d.ContentAuthor, article.author_id)
+                    active = current_article.article_id == article.article_id
+                    url = escape_html('/moderation?' + urlencode({'filter': selected, 'article': article.article_id}))
+                    selected_row = ' class="queue-selected"' if active else ''
+                    selected_link = ' aria-current="true"' if active else ''
+                    body += (f'<tr{selected_row}><td>{escape_html(ticket.queue_entry_id[:8])}</td>'
+                             f'<td><a href="{url}"{selected_link}>{escape_html(article.title)}</a></td>'
+                             f'<td>{escape_html(author.full_name if author else "Автор")}</td>'
+                             f'<td>{escape_html(author.department if author and author.department else "—")}</td>'
+                             f'<td>{escape_html(ticket.received_at.date())}</td>'
+                             f'<td><span class="queue-status">{escape_html(status_label(article.publication_status))}</span></td></tr>')
+                body += '</tbody></table></div></section>'
+                article_id = escape_html(current_article.article_id)
+                ticket_id = escape_html(current_ticket.queue_entry_id)
+                author = self.db.get(d.ContentAuthor, current_article.author_id)
+                category = self.db.get(d.Category, current_article.category_id)
+                media = self.db.list_entities(d.MediaAttachment, 'article_id=?', (current_article.article_id,))
+                files = ''.join(f'<li><a href="/media/{escape_html(item.media_id)}">{escape_html(item.file_url)}</a></li>' for item in media)
+                note = data.get('note', '') if data and self.current_path.endswith('/' + current_article.article_id) else ''
+                body += (f'<article id="review" class="prototype-panel review-panel management-card"><h2>Проверка статьи: '
+                         f'{escape_html(current_article.title)}</h2>'
+                         f'<p class="muted">Автор: {escape_html(author.full_name if author else "—")} · '
+                         f'Рубрика: {escape_html(category.name if category else "—")} · '
+                         f'Символов: {len(current_article.content)} · Вложений: {len(media)}</p>'
+                         '<section class="review-preview"><h3>Предпросмотр статьи</h3>'
+                         f'<div class="article-body">{render_markdown(current_article.content)}</div>'
+                         + (f'<ul class="review-attachments">{files}</ul>' if files else '') +
+                         f'<a href="/article/{article_id}">Открыть статью и вложения</a></section>'
+                         f'<form class="review-priority" method="post" action="/moderation/priority/{ticket_id}">{self._csrf()}'
+                         f'<label>Приоритет <input type="number" min="0" max="10" name="priority" value="{current_ticket.priority}"></label>'
                          '<button>Установить приоритет</button></form>'
-                         f'<form method="post" action="/moderation/article/{escape_html(article.article_id)}">{self._csrf()}'
-                         f'<label>Замечание<textarea name="note">{escape_html(data.get("note", "") if data and self.current_path.endswith(article.article_id) else "")}</textarea></label>'
-                         '<button name="decision" value="reject">Вернуть на доработку</button> '
-                         '<button class="primary" name="decision" value="approve">Одобрить и опубликовать</button></form></article>')
+                         f'<form class="review-decision" method="post" action="/moderation/article/{article_id}">{self._csrf()}'
+                         f'<label>Замечание редактора<textarea name="note">{escape_html(note)}</textarea></label>'
+                         '<div class="review-actions"><button class="button-reject" name="decision" value="reject">Вернуть на доработку</button>'
+                         '<button class="button-success" name="decision" value="approve">Одобрить и опубликовать</button></div></form></article>')
         if selected in ("all", "complaints"):
             complaints = self.moderation.complaint_repository.get_complaint_queue()
             ids = sorted({c.comment_id for c in complaints})
@@ -794,7 +898,9 @@ class WebApp:
                 raise d.DomainException("Приоритет от 0 до 10")
             ticket.priority = priority
             self.db.save(ticket)
-            return self._redirect("/moderation?filter=articles&result=priority")
+            return self._redirect('/moderation?' + urlencode({
+                'filter': 'articles', 'result': 'priority', 'article': article.article_id,
+            }))
         if path.startswith("/moderation/complaint/"):
             self._require("article.moderate")
             decision = data.get("decision", "")

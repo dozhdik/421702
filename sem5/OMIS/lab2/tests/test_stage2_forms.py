@@ -1,7 +1,7 @@
 from omis_blog import domain as d
 from omis_blog.auth import hash_password
 from omis_blog.main import BlogPlatformApp
-from omis_blog.web import WebApp
+from omis_blog.web import WebApp, render_markdown
 from tests.test_web import Client
 
 
@@ -31,3 +31,9 @@ def test_form_errors_keep_safe_values(tmp_path):
     assert 'Important &lt;text&gt;' in body and 'one, two' in body
     assert 'Нужны заголовок' in body
     app.db.close()
+
+
+def test_editor_formatting_renders_without_enabling_raw_html():
+    text = '## **План**\n\n*Пример*: **<img src=x onerror=alert(1)>**'
+    assert render_markdown(text) == ('<h2><strong>План</strong></h2>'
+                                     '<p><em>Пример</em>: <strong>&lt;img src=x onerror=alert(1)&gt;</strong></p>')

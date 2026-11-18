@@ -26,7 +26,7 @@ class InsuranceClaim:
                 raise ValueError("Выплата превышает сумму по категории")
             if claim_id is None:
                 return conn.execute("INSERT INTO InsuranceClaim(contract_id,employee_id,claim_date,amount,description) VALUES (?,?,?,?,?)", (contract_id, employee_id, claim_date, amount, description)).lastrowid
-            cur = conn.execute("UPDATE InsuranceClaim SET contract_id=?,employee_id=?,claim_date=?,amount=?,description=? WHERE id=?", (contract_id,employee_id,claim_date,amount,description,claim_id))
+            cur = conn.execute("UPDATE InsuranceClaim SET contract_id=?,employee_id=?,claim_date=?,amount=?,description=? WHERE id=?", (contract_id, employee_id, claim_date, amount, description, claim_id))
             if not cur.rowcount:
                 raise ValueError("Страховой случай не найден")
             return claim_id

@@ -8,6 +8,25 @@
   const show = text => { status.textContent = text; };
   form.addEventListener('input', () => { revision++; show('Есть несохранённые изменения'); });
   form.addEventListener('change', () => { revision++; show('Есть несохранённые изменения'); });
+  form.addEventListener('click', event => {
+    const command = event.target.closest('[data-markdown]')?.dataset.markdown;
+    if (!command) return;
+    const text = form.querySelector('[name=content]');
+    const end = text.selectionEnd;
+    if (command === 'heading') {
+      const start = text.selectionStart;
+      const line = start === 0 ? 0 : text.value.lastIndexOf('\n', start - 1) + 1;
+      const heading = '## ';
+      if (!text.value.startsWith(heading, line)) text.setRangeText(heading, line, line, 'preserve');
+    } else {
+      const start = text.selectionStart;
+      const marker = command === 'bold' ? '**' : '*';
+      text.setRangeText(marker + text.value.slice(start, end) + marker, start, end, 'preserve');
+      text.setSelectionRange(start + marker.length, end + marker.length);
+    }
+    text.focus();
+    text.dispatchEvent(new Event('input', {bubbles: true}));
+  });
   async function autosave() {
     if (pending || submitting || revision === saved) return;
     const sent = revision;

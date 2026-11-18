@@ -150,8 +150,8 @@ class InsuranceTests(unittest.TestCase):
         self.assertFalse(any(row["id"] == item for row in list_items("individuals")))
 
     def test_empty(self):
-        self.assertEqual(Contract.report_contracts(1,"2026-01-01")["contracts"], [])
-        self.assertEqual(Contract.report_agents(1,"2026-01-01")["agents"], [])
+        self.assertEqual(Contract.report_contracts(1, "2026-01-01")["contracts"], [])
+        self.assertEqual(Contract.report_agents(1, "2026-01-01")["agents"], [])
         self.assertEqual(Contract.report_payouts("2026-01-01")["payouts"], [])
 
     def test_gui_import_error_is_not_reported_as_missing_tkinter(self):

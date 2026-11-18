@@ -55,6 +55,12 @@
 
 Администратор управляет рубриками, ролями и разрешениями и может сформировать отчёт за период на основе сохранённых показателей публикаций, комментариев, реакций и просмотров. Уведомления отображаются получателю в отдельном разделе.
 
+### Интерфейс по макетам ТЗ
+
+Четыре основных экрана повторяют компоновку приложения H (с. 15–17): лента с рубриками и правой колонкой, редактор с полями и панелью форматирования над текстом, таблица модерации с проверкой выбранной статьи под ней и экран чтения с реакциями и обсуждением. На узком экране колонки складываются, таблицу можно прокручивать внутри её блока. Вместо опросов в ленте находятся быстрые ссылки на доступные разделы.
+
+[Сравнение с макетами и снимки](docs/ui_spec_alignment.md) · [Обоснование дополнений к UML, пункт C](MODEL_ERRORS.md#c-дополнения-реализации-и-их-обоснование)
+
 ## 5. Архитектура и средства реализации
 
 Приложение использует Python 3.11 или новее, стандартный WSGI-сервер и SQLite. Страницы формируются на сервере; оформление реализовано локальными CSS и JavaScript. Внешний сервер баз данных, платные сервисы и API-ключи для работы не требуются.
@@ -74,6 +80,108 @@
 | `docs/` | Материалы UML, решения, матрица тестов и отчёты. |
 
 Пароли хранятся в виде хешей PBKDF2; формы защищены CSRF-токенами. Вложения хранятся в каталоге `uploads/` рядом с файлом базы данных.
+
+## 5.1. Где находятся классы UML
+
+Ниже приведено соответствие базовых диаграмм классов раздела E (страницы 11–13 PDF) и связанных сущностей ER/UI. Названия в отчёте сопоставлены с английскими именами в коде. Повторяющиеся на разных диаграммах классы указаны один раз. Ссылки ведут к определениям классов; поля, методы и связи перечислены в [карте имён](docs/uml_name_mapping.md) и [инвентаризации](docs/uml_coverage.md).
+
+### Модель предметной области и состояния интерфейса
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| Пользователь | [`User`](omis_blog/domain.py#L78) |
+| УчетнаяЗапись | [`UserAccount`](omis_blog/domain.py#L86) |
+| Роль | [`Role`](omis_blog/domain.py#L96) |
+| ПравоДоступа | [`AccessPermission`](omis_blog/domain.py#L103) |
+| АвторКонтента | [`ContentAuthor`](omis_blog/domain.py#L110) |
+| Редактор | [`Editor`](omis_blog/domain.py#L118) |
+| Читатель | [`Reader`](omis_blog/domain.py#L126) |
+| АдминистраторПлатформы | [`PlatformAdministrator`](omis_blog/domain.py#L134) |
+| Статья | [`Article`](omis_blog/domain.py#L142) |
+| Рубрика | [`Category`](omis_blog/domain.py#L174) |
+| Тег | [`Tag`](omis_blog/domain.py#L183) |
+| Медиавложение | [`MediaAttachment`](omis_blog/domain.py#L189) |
+| ПараметрыОформления | [`FormattingOptions`](omis_blog/domain.py#L198) |
+| ОчередьМодерации | [`ModerationQueueEntry`](omis_blog/domain.py#L206) |
+| ЗамечаниеРедактора | [`EditorRemark`](omis_blog/domain.py#L216) |
+| ПротоколПубликации | [`PublicationRecord`](omis_blog/domain.py#L227) |
+| Комментарий | [`Comment`](omis_blog/domain.py#L236) |
+| Жалоба | [`Complaint`](omis_blog/domain.py#L249) |
+| Реакция | [`Reaction`](omis_blog/domain.py#L259) |
+| ПоисковыйИндекс | [`SearchIndex`](omis_blog/domain.py#L268) |
+| ОтчетАктивности | [`ActivityReport`](omis_blog/domain.py#L276) |
+| ИнтерфейснаяПодсистема | [`InterfaceSubsystem`](omis_blog/domain.py#L288) |
+| СессияПользователя | [`UserSession`](omis_blog/domain.py#L304) |
+| ЛентаПубликаций | [`PublicationFeed`](omis_blog/domain.py#L312) |
+| ФормаРедактора | [`ArticleEditorFormState`](omis_blog/domain.py#L320) |
+| КабинетМодератора | [`ModeratorDashboardState`](omis_blog/domain.py#L328) |
+| ОкноЧтенияСтатьи | [`ArticleViewerState`](omis_blog/domain.py#L335) |
+
+### Репозитории
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| IРепозиторий | [`IRepository`](omis_blog/storage.py#L272) |
+| РепозиторийСтатей | [`ArticleRepository`](omis_blog/storage.py#L298) |
+| РепозиторийКомментариев | [`CommentRepository`](omis_blog/storage.py#L317) |
+| РепозиторийЖалоб | [`ComplaintRepository`](omis_blog/storage.py#L335) |
+| РепозиторийОтчетов | [`ReportRepository`](omis_blog/storage.py#L363) |
+
+### Контроллеры
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| КонтроллерПубликаций | [`PublicationController`](omis_blog/controllers.py#L56) |
+| КонтроллерМодерации | [`ModerationController`](omis_blog/controllers.py#L144) |
+| КонтроллерУведомлений | [`NotificationController`](omis_blog/controllers.py#L22) |
+| КонтроллерЛенты | [`FeedController`](omis_blog/controllers.py#L218) |
+| КонтроллерОтчетов | [`ReportController`](omis_blog/controllers.py#L252) |
+
+### Стратегии модерации и команды
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| IСтратегияМодерации | [`IModerationStrategy`](omis_blog/patterns.py#L12) |
+| СтратегияРучнойМодерации | [`ManualModerationStrategy`](omis_blog/patterns.py#L17) |
+| СтратегияАвтоФильтрации | [`AutoFilterStrategy`](omis_blog/patterns.py#L22) |
+| IКоманда | [`ICommand`](omis_blog/patterns.py#L31) |
+| КомандаПубликации | [`PublishArticleCommand`](omis_blog/patterns.py#L68) |
+| КомандаОтклоненияСтатьи | [`RejectArticleCommand`](omis_blog/patterns.py#L72) |
+| КомандаСкрытияКомментария | [`HideCommentCommand`](omis_blog/patterns.py#L98) |
+| КомандаУдаленияКомментария | [`DeleteCommentCommand`](omis_blog/patterns.py#L102) |
+
+### Представления
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| IПредставление | [`IView`](omis_blog/presentation.py#L11) |
+| БазовоеПредставление | [`BaseView`](omis_blog/presentation.py#L19) |
+| IПредставлениеЛенты | [`IFeedView`](omis_blog/presentation.py#L32) |
+| IПредставлениеФормыРедактора | [`IArticleEditorView`](omis_blog/presentation.py#L40) |
+| IПредставлениеКабинетаМодератора | [`IModeratorDashboardView`](omis_blog/presentation.py#L48) |
+| IПредставлениеЧтенияСтатьи | [`IArticleDetailView`](omis_blog/presentation.py#L56) |
+| ПредставлениеЛенты | [`FeedView`](omis_blog/presentation.py#L64) |
+| ПредставлениеФормыРедактора | [`ArticleEditorView`](omis_blog/presentation.py#L83) |
+| ПредставлениеКабинетаМодератора | [`ModeratorDashboardView`](omis_blog/presentation.py#L102) |
+| ПредставлениеЧтенияСтатьи | [`ArticleDetailView`](omis_blog/presentation.py#L120) |
+| ПредставлениеОтчетов | [`ReportView`](omis_blog/presentation.py#L138) |
+
+### Инфраструктура
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| КонтейнерЗависимостей | [`DependencyContainer`](omis_blog/infrastructure.py#L25) |
+| ФабрикаКонтроллеров | [`ControllerFactory`](omis_blog/infrastructure.py#L53) |
+| ФабрикаПредставлений | [`ViewFactory`](omis_blog/infrastructure.py#L75) |
+| КонфигураторСистемы | [`SystemConfigurator`](omis_blog/infrastructure.py#L89) |
+
+### Точка входа
+
+| Класс или интерфейс в отчёте | Реализация |
+| --- | --- |
+| ПриложениеБлогПлатформы | [`BlogPlatformApp`](omis_blog/main.py#L15) |
+
+Раздел F PDF описывает направления развития: новые классы версионирования, планирования и мультитенантности в эту таблицу базовой реализации не включены.
 
 ## 6. Запуск
 

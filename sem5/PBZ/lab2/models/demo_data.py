@@ -150,7 +150,7 @@ def add_supplemental_data(conn, added):
         selected = rng.sample(members, 3 + index % 4)
         categories = set()
         for employee_id in selected:
-            conn.execute("INSERT INTO ContractEmployee(contract_id,employee_id) VALUES (?,?)", (contract_id,employee_id))
+            conn.execute("INSERT INTO ContractEmployee(contract_id,employee_id) VALUES (?,?)", (contract_id, employee_id))
             categories.add(conn.execute("SELECT risk_category FROM Employee WHERE id=?", (employee_id,)).fetchone()[0])
             added["contract_employees"] += 1
         for category in sorted(categories):

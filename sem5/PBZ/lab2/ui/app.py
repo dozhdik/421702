@@ -120,7 +120,8 @@ class App(tk.Tk):
         frame = ttk.Frame(self.tabs, padding=8)
         self.tabs.add(frame, text=title)
         tree = self.tree(frame, ("ID", *labels))
-        buttons = ttk.Frame(frame); buttons.pack(fill="x", pady=6)
+        buttons = ttk.Frame(frame)
+        buttons.pack(fill="x", pady=6)
         self.views[kind] = tree
         actions = (("Добавить", lambda: self.entity_form(kind, labels)),
                               ("Изменить", lambda: self.entity_form(kind, labels, self.selected(tree))),
@@ -155,7 +156,9 @@ class App(tk.Tk):
         row = next((r for r in self.tenant.list_items(kind) if r["id"] == item_id), {}) if item_id else {}
         if item_id and not row:
             raise ValueError("Запись не найдена")
-        win = tk.Toplevel(self); win.title("Изменить" if item_id else "Добавить"); win.transient(self)
+        win = tk.Toplevel(self)
+        win.title("Изменить" if item_id else "Добавить")
+        win.transient(self)
         entries = {}
         for index, (field, label) in enumerate(zip(fields, labels)):
             ttk.Label(win, text=label).grid(row=index, column=0, padx=8, pady=4, sticky="w")
@@ -178,7 +181,7 @@ class App(tk.Tk):
             entries[field] = entry
         def save():
             try:
-                values = {f: e.get() for f,e in entries.items()}
+                values = {f: e.get() for f, e in entries.items()}
                 for field in ("organization_id", "agent_id"):
                     if field in values:
                         values[field] = values[field].split(":", 1)[0]
@@ -196,7 +199,8 @@ class App(tk.Tk):
                     self.tenant.save_employee(values, item_id)
                 else:
                     save_item(kind, values, item_id)
-                self.refresh_all(); win.destroy()
+                self.refresh_all()
+                win.destroy()
                 messagebox.showinfo("Успех", "Запись сохранена", parent=self)
             except (ValueError, sqlite3.Error) as exc:
                 messagebox.showerror("Ошибка", str(exc), parent=win)
@@ -222,20 +226,23 @@ class App(tk.Tk):
             messagebox.showinfo("Успех", "Запись удалена", parent=self)
 
     def refresh_all(self):
-        for kind in self.views: self.refresh(kind)
+        for kind in self.views:
+            self.refresh(kind)
         self.refresh_contracts()
         self.refresh_claims()
 
     def contract_tab(self):
-        frame=ttk.Frame(self.tabs,padding=8); self.tabs.add(frame,text="Договоры")
-        self.contracts=self.tree(frame,("ID","Номер","Организация","Агент","Начало","Окончание"))
-        bar=ttk.Frame(frame); bar.pack(fill="x",pady=6)
-        for label,action in (("Добавить",lambda:self.contract_form()),
-                             ("Изменить",lambda:self.contract_form(self.selected(self.contracts))),
-                             ("Удалить",lambda:self.delete_contract()),
-                             ("Поиск по номеру",self.find_contract),
-                             ("Обновить",self.refresh_contracts)):
-            ttk.Button(bar,text=label,command=lambda a=action:self.guard(a)).pack(side="left",padx=3)
+        frame = ttk.Frame(self.tabs, padding=8)
+        self.tabs.add(frame, text="Договоры")
+        self.contracts = self.tree(frame, ("ID", "Номер", "Организация", "Агент", "Начало", "Окончание"))
+        bar = ttk.Frame(frame)
+        bar.pack(fill="x", pady=6)
+        for label, action in (("Добавить", lambda:self.contract_form()),
+                             ("Изменить", lambda:self.contract_form(self.selected(self.contracts))),
+                             ("Удалить", lambda:self.delete_contract()),
+                             ("Поиск по номеру", self.find_contract),
+                             ("Обновить", self.refresh_contracts)):
+            ttk.Button(bar, text=label, command=lambda a=action:self.guard(a)).pack(side="left", padx=3)
         self.refresh_contracts()
 
     def refresh_contracts(self):
@@ -246,91 +253,114 @@ class App(tk.Tk):
                                    [tuple(row.values()) for row in rows])
             self.contracts._initial_widths_set = True
         for r in rows:
-            self.contracts.insert("","end",iid=r["id"],values=self.table_values(r.values()))
+            self.contracts.insert("", "end", iid=r["id"], values=self.table_values(r.values()))
 
     def find_contract(self):
-        number=simpledialog.askstring("Поиск","Номер договора:",parent=self)
-        if number is None: return
+        number = simpledialog.askstring("Поиск", "Номер договора:", parent=self)
+        if number is None:
+            return
         for iid in self.contracts.get_children():
-            if self.contracts.item(iid,"values")[1].strip() == number:
-                self.contracts.selection_set(iid); self.contracts.see(iid); return
-        messagebox.showinfo("Поиск","Договор не найден",parent=self)
+            if self.contracts.item(iid, "values")[1].strip() == number:
+                self.contracts.selection_set(iid)
+                self.contracts.see(iid)
+                return
+        messagebox.showinfo("Поиск", "Договор не найден", parent=self)
 
     def delete_contract(self):
-        cid=self.selected(self.contracts)
+        cid = self.selected(self.contracts)
         self.tenant.require_contract(cid)
-        if messagebox.askyesno("Удаление","Удалить договор, его состав и суммы?",parent=self):
-            Contract.delete_contract(cid); self.refresh_all()
+        if messagebox.askyesno("Удаление", "Удалить договор, его состав и суммы?", parent=self):
+            Contract.delete_contract(cid)
+            self.refresh_all()
             messagebox.showinfo("Успех", "Договор удалён", parent=self)
 
     def contract_form(self, cid=None):
         if cid is not None:
             self.tenant.require_contract(cid)
-        win=tk.Toplevel(self); win.title("Коллективный договор"); win.geometry("750x650")
-        rows=records("SELECT * FROM Contract WHERE id=?", (cid,)) if cid else []
-        old=rows[0] if rows else {}
-        orgs=self.tenant.organizations(); agents=self.tenant.agents()
+        win = tk.Toplevel(self)
+        win.title("Коллективный договор")
+        win.geometry("750x650")
+        rows = records("SELECT * FROM Contract WHERE id=?", (cid,)) if cid else []
+        old = rows[0] if rows else {}
+        orgs = self.tenant.organizations()
+        agents = self.tenant.agents()
         if not orgs or not agents:
-            win.destroy(); raise ValueError("Сначала добавьте организацию и агента")
-        fields={}
-        for n,(key,label) in enumerate((("contract_number","Номер"),("organization_id","Организация"),("agent_id","Агент"),("conclusion_date","Начало YYYY-MM-DD"),("end_date","Окончание YYYY-MM-DD"))):
-            ttk.Label(win,text=label).grid(row=n,column=0,sticky="w",padx=8,pady=3)
-            if key in ("organization_id","agent_id"):
-                data=orgs if key=="organization_id" else agents
-                values=[f'{x["id"]}: {x["full_name"]}' for x in data]
-                widget=ttk.Combobox(win,values=values,state="readonly",width=48)
-                index=next((i for i,x in enumerate(data) if x["id"]==old.get(key)),0)
+            win.destroy()
+            raise ValueError("Сначала добавьте организацию и агента")
+        fields = {}
+        for n, (key, label) in enumerate((("contract_number", "Номер"), ("organization_id", "Организация"), ("agent_id", "Агент"), ("conclusion_date", "Начало YYYY-MM-DD"), ("end_date", "Окончание YYYY-MM-DD"))):
+            ttk.Label(win, text=label).grid(row=n, column=0, sticky="w", padx=8, pady=3)
+            if key in ("organization_id", "agent_id"):
+                data = orgs if key == "organization_id" else agents
+                values = [f'{x["id"]}: {x["full_name"]}' for x in data]
+                widget = ttk.Combobox(win, values=values, state="readonly", width=48)
+                index = next((i for i, x in enumerate(data) if x["id"] == old.get(key)), 0)
                 widget.current(index)
-                if cid and key=="organization_id": widget.configure(state="disabled")
+                if cid and key == "organization_id":
+                    widget.configure(state="disabled")
             else:
-                widget=ttk.Entry(win,width=50); widget.insert(0,old.get(key,""))
-            widget.grid(row=n,column=1,sticky="ew",padx=8,pady=3); fields[key]=widget
-        ttk.Label(win,text="Сотрудники (можно выбрать несколько)").grid(row=5,column=0,columnspan=2,sticky="w",padx=8)
-        employees=tk.Listbox(win,selectmode="multiple",height=8,exportselection=False)
-        employees.grid(row=6,column=0,columnspan=2,sticky="nsew",padx=8)
-        ttk.Label(win,text="Суммы по категориям: категория = сумма, каждая с новой строки").grid(row=7,column=0,columnspan=2,sticky="w",padx=8)
-        amounts=tk.Text(win,height=7,width=70); amounts.grid(row=8,column=0,columnspan=2,sticky="nsew",padx=8)
-        existing_ids={r["employee_id"] for r in records("SELECT employee_id FROM ContractEmployee WHERE contract_id=?",(cid,))} if cid else set()
+                widget = ttk.Entry(win, width=50)
+                widget.insert(0, old.get(key, ""))
+            widget.grid(row=n, column=1, sticky="ew", padx=8, pady=3)
+            fields[key] = widget
+        ttk.Label(win, text="Сотрудники (можно выбрать несколько)").grid(row=5, column=0, columnspan=2, sticky="w", padx=8)
+        employees = tk.Listbox(win, selectmode="multiple", height=8, exportselection=False)
+        employees.grid(row=6, column=0, columnspan=2, sticky="nsew", padx=8)
+        ttk.Label(win, text="Суммы по категориям: категория = сумма, каждая с новой строки").grid(row=7, column=0, columnspan=2, sticky="w", padx=8)
+        amounts = tk.Text(win, height=7, width=70)
+        amounts.grid(row=8, column=0, columnspan=2, sticky="nsew", padx=8)
+        existing_ids = {r["employee_id"] for r in records("SELECT employee_id FROM ContractEmployee WHERE contract_id=?", (cid,))} if cid else set()
         if cid:
-            for p in records("SELECT risk_category,payout_amount FROM Payout WHERE contract_id=?",(cid,)):
-                amounts.insert("end",f'{p["risk_category"]} = {p["payout_amount"]}\n')
-        available=[]
+            for p in records("SELECT risk_category,payout_amount FROM Payout WHERE contract_id=?", (cid,)):
+                amounts.insert("end", f'{p["risk_category"]} = {p["payout_amount"]}\n')
+        available = []
         def load_employees(event=None):
-            available.clear(); employees.delete(0,"end")
-            oid=int(fields["organization_id"].get().split(":",1)[0])
+            available.clear()
+            employees.delete(0, "end")
+            oid = int(fields["organization_id"].get().split(":", 1)[0])
             for r in self.tenant.employees_for_organization(oid):
                 available.append(r["id"])
-                employees.insert("end",f'{r["id"]}: {r["full_name"]} ({r["risk_category"]})')
-                if r["id"] in existing_ids: employees.selection_set("end")
-        fields["organization_id"].bind("<<ComboboxSelected>>",load_employees); load_employees()
+                employees.insert("end", f'{r["id"]}: {r["full_name"]} ({r["risk_category"]})')
+                if r["id"] in existing_ids:
+                    employees.selection_set("end")
+        fields["organization_id"].bind("<<ComboboxSelected>>", load_employees)
+        load_employees()
         def save():
             try:
-                payouts={}
-                for line in amounts.get("1.0","end").splitlines():
+                payouts = {}
+                for line in amounts.get("1.0", "end").splitlines():
                     if line.strip():
-                        if "=" not in line: raise ValueError("Формат суммы: категория = сумма")
-                        category,amount=line.split("=",1)
-                        if category.strip() in payouts: raise ValueError("Категория указана дважды")
-                        payouts[category.strip()]=amount.strip()
-                agent_id = int(fields["agent_id"].get().split(":",1)[0])
-                org_id = int(fields["organization_id"].get().split(":",1)[0])
+                        if "=" not in line:
+                            raise ValueError("Формат суммы: категория = сумма")
+                        category, amount = line.split("=", 1)
+                        if category.strip() in payouts:
+                            raise ValueError("Категория указана дважды")
+                        payouts[category.strip()] = amount.strip()
+                agent_id = int(fields["agent_id"].get().split(":", 1)[0])
+                org_id = int(fields["organization_id"].get().split(":", 1)[0])
                 self.tenant.require_organization(org_id)
                 self.tenant.require_agent(agent_id)
                 if cid is not None:
                     self.tenant.require_contract(cid)
-                Contract.save_contract(fields["contract_number"].get(),org_id,agent_id,fields["conclusion_date"].get(),fields["end_date"].get(),[available[i] for i in employees.curselection()],payouts,cid)
-                self.refresh_all(); win.destroy()
+                Contract.save_contract(fields["contract_number"].get(), org_id, agent_id, fields["conclusion_date"].get(), fields["end_date"].get(), [available[i] for i in employees.curselection()], payouts, cid)
+                self.refresh_all()
+                win.destroy()
                 messagebox.showinfo("Успех", "Договор сохранён", parent=self)
-            except (ValueError,sqlite3.Error) as exc: messagebox.showerror("Ошибка",str(exc),parent=win)
-        ttk.Button(win,text="Сохранить договор",command=save).grid(row=9,column=0,columnspan=2,pady=8)
-        win.columnconfigure(1,weight=1); win.rowconfigure(6,weight=1); win.rowconfigure(8,weight=1)
+            except (ValueError, sqlite3.Error) as exc:
+                messagebox.showerror("Ошибка", str(exc), parent=win)
+        ttk.Button(win, text="Сохранить договор", command=save).grid(row=9, column=0, columnspan=2, pady=8)
+        win.columnconfigure(1, weight=1)
+        win.rowconfigure(6, weight=1)
+        win.rowconfigure(8, weight=1)
 
     def claim_tab(self):
-        frame=ttk.Frame(self.tabs,padding=8); self.tabs.add(frame,text="Страховые случаи")
-        self.claims=self.tree(frame,("ID","Договор","Сотрудник","Дата","Сумма","Описание"))
-        bar=ttk.Frame(frame); bar.pack(fill="x",pady=6)
-        for label,action in (("Добавить",lambda:self.claim_form()),("Изменить",lambda:self.claim_form(self.selected(self.claims))),("Удалить",self.remove_claim),("Обновить",self.refresh_claims)):
-            ttk.Button(bar,text=label,command=lambda a=action:self.guard(a)).pack(side="left",padx=3)
+        frame = ttk.Frame(self.tabs, padding=8)
+        self.tabs.add(frame, text="Страховые случаи")
+        self.claims = self.tree(frame, ("ID", "Договор", "Сотрудник", "Дата", "Сумма", "Описание"))
+        bar = ttk.Frame(frame)
+        bar.pack(fill="x", pady=6)
+        for label, action in (("Добавить", lambda:self.claim_form()), ("Изменить", lambda:self.claim_form(self.selected(self.claims))), ("Удалить", self.remove_claim), ("Обновить", self.refresh_claims)):
+            ttk.Button(bar, text=label, command=lambda a=action:self.guard(a)).pack(side="left", padx=3)
         self.refresh_claims()
 
     def refresh_claims(self):
@@ -341,34 +371,37 @@ class App(tk.Tk):
                                    [tuple(row.values()) for row in rows])
             self.claims._initial_widths_set = True
         for r in rows:
-            self.claims.insert("","end",iid=r["id"],values=self.table_values(r.values(), self.claims["columns"]))
+            self.claims.insert("", "end", iid=r["id"], values=self.table_values(r.values(), self.claims["columns"]))
 
     def remove_claim(self):
-        cid=self.selected(self.claims)
+        cid = self.selected(self.claims)
         self.tenant.require_claim(cid)
-        if messagebox.askyesno("Удаление","Удалить страховой случай?",parent=self):
-            InsuranceClaim.delete_claim(cid); self.refresh_claims()
+        if messagebox.askyesno("Удаление", "Удалить страховой случай?", parent=self):
+            InsuranceClaim.delete_claim(cid)
+            self.refresh_claims()
             messagebox.showinfo("Успех", "Страховой случай удалён", parent=self)
 
     def claim_form(self, claim_id=None):
         if claim_id is not None:
             self.tenant.require_claim(claim_id)
-        rows=records("SELECT * FROM InsuranceClaim WHERE id=?",(claim_id,)) if claim_id else []
-        old=rows[0] if rows else {}
-        win=tk.Toplevel(self); win.title("Страховой случай")
-        entries={}
+        rows = records("SELECT * FROM InsuranceClaim WHERE id=?", (claim_id,)) if claim_id else []
+        old = rows[0] if rows else {}
+        win = tk.Toplevel(self)
+        win.title("Страховой случай")
+        entries = {}
         contract_rows = [{"id": row["id"], "contract_number": row["contract_number"]} for row in self.tenant.contracts()]
         if not contract_rows:
             win.destroy()
             raise ValueError("Сначала добавьте договор")
-        for i,(key,label) in enumerate((("contract_id","ID договора"),("employee_id","ID сотрудника"),("claim_date","Дата YYYY-MM-DD"),("amount","Сумма"),("description","Описание"))):
-            ttk.Label(win,text=label).grid(row=i,column=0,padx=8,pady=4)
+        for i, (key, label) in enumerate((("contract_id", "ID договора"), ("employee_id", "ID сотрудника"), ("claim_date", "Дата YYYY-MM-DD"), ("amount", "Сумма"), ("description", "Описание"))):
+            ttk.Label(win, text=label).grid(row=i, column=0, padx=8, pady=4)
             if key in ("contract_id", "employee_id"):
                 entry = ttk.Combobox(win, state="readonly", width=42)
             else:
-                entry=ttk.Entry(win,width=45)
-                entry.insert(0,str(old.get(key,"")))
-            entry.grid(row=i,column=1,padx=8,pady=4); entries[key]=entry
+                entry = ttk.Entry(win, width=45)
+                entry.insert(0, str(old.get(key, "")))
+            entry.grid(row=i, column=1, padx=8, pady=4)
+            entries[key] = entry
         entries["contract_id"]["values"] = [f'{r["id"]}: {r["contract_number"]}' for r in contract_rows]
         entries["contract_id"].current(next((i for i, r in enumerate(contract_rows) if r["id"] == old.get("contract_id")), 0))
         def load_claim_employees(event=None):
@@ -388,42 +421,48 @@ class App(tk.Tk):
                 employee_id = int(entries["employee_id"].get().split(":", 1)[0])
                 self.tenant.require_contract(contract_id)
                 self.tenant.require_employee(employee_id)
-                InsuranceClaim.save_claim(contract_id,employee_id,entries["claim_date"].get(),entries["amount"].get(),entries["description"].get(),claim_id)
-                self.refresh_claims(); win.destroy()
+                InsuranceClaim.save_claim(contract_id, employee_id, entries["claim_date"].get(), entries["amount"].get(), entries["description"].get(), claim_id)
+                self.refresh_claims()
+                win.destroy()
                 messagebox.showinfo("Успех", "Страховой случай сохранён", parent=self)
-            except (ValueError,sqlite3.Error) as exc: messagebox.showerror("Ошибка",str(exc),parent=win)
-        ttk.Button(win,text="Сохранить",command=save).grid(columnspan=2,pady=8)
+            except (ValueError, sqlite3.Error) as exc:
+                messagebox.showerror("Ошибка", str(exc), parent=win)
+        ttk.Button(win, text="Сохранить", command=save).grid(columnspan=2, pady=8)
 
     def report_tab(self):
-        frame=ttk.Frame(self.tabs,padding=8); self.tabs.add(frame,text="Отчёты")
-        controls=ttk.Frame(frame); controls.pack(fill="x")
-        ttk.Label(controls,text="Дата YYYY-MM-DD:").pack(side="left")
-        self.report_date=ttk.Entry(controls,width=12); self.report_date.pack(side="left",padx=5)
-        ttk.Label(controls,text="Код организации (необязательно):").pack(side="left",padx=5)
-        self.report_code=ttk.Entry(controls,width=10); self.report_code.pack(side="left",padx=5)
-        for label,kind in (("Договоры",1),("Агенты",2),("Суммы по категориям",3)):
-            ttk.Button(controls,text=label,command=lambda k=kind:self.guard(lambda:self.report(k))).pack(side="left",padx=4)
+        frame = ttk.Frame(self.tabs, padding=8)
+        self.tabs.add(frame, text="Отчёты")
+        controls = ttk.Frame(frame)
+        controls.pack(fill="x")
+        ttk.Label(controls, text="Дата YYYY-MM-DD:").pack(side="left")
+        self.report_date = ttk.Entry(controls, width=12)
+        self.report_date.pack(side="left", padx=5)
+        ttk.Label(controls, text="Код организации (необязательно):").pack(side="left", padx=5)
+        self.report_code = ttk.Entry(controls, width=10)
+        self.report_code.pack(side="left", padx=5)
+        for label, kind in (("Договоры", 1), ("Агенты", 2), ("Суммы по категориям", 3)):
+            ttk.Button(controls, text=label, command=lambda k=kind:self.guard(lambda:self.report(k))).pack(side="left", padx=4)
         self.report_info = ttk.Label(frame, text="Выберите дату и постройте отчёт")
         self.report_info.pack(anchor="w", pady=8)
         self.report_tree = self.tree(frame, ("result",))
 
     def report(self, kind):
-        selected_date=self.report_date.get()
-        code_text=self.report_code.get().strip()
-        code=int(code_text) if code_text else None
+        selected_date = self.report_date.get()
+        code_text = self.report_code.get().strip()
+        code = int(code_text) if code_text else None
         if code is not None and code <= 0:
             raise ValueError("Код организации должен быть положительным")
-        if kind==1:
-            rows=self.tenant.report_contracts(selected_date,code)
-            info=f"Дата: {selected_date} | Страховая компания: {self.tenant.name}"
+        if kind == 1:
+            rows = self.tenant.report_contracts(selected_date, code)
+            info = f"Дата: {selected_date} | Страховая компания: {self.tenant.name}"
             columns = (("organization", "Организация"), ("address", "Адрес"), ("contract_number", "Номер договора"), ("conclusion_date", "Начало"), ("end_date", "Окончание"))
-        elif kind==2:
-            rows=self.tenant.report_agents(selected_date,code)
-            info=f"Дата: {selected_date} | Страховая компания: {self.tenant.name}"
+        elif kind == 2:
+            rows = self.tenant.report_agents(selected_date, code)
+            info = f"Дата: {selected_date} | Страховая компания: {self.tenant.name}"
             columns = (("insurance_company", "Страховая фирма"), ("full_name", "ФИО"), ("phone_number", "Телефон"))
         else:
-            rows=self.tenant.report_payouts(selected_date,code)
-            info=f"Дата: {selected_date}"
+            rows = self.tenant.report_payouts(selected_date, code)
+            info = f"Дата: {selected_date}"
             columns = (("organization", "Организация"), ("contract_number", "Договор"),
                        ("risk_category", "Категория"), ("payout_amount", "Сумма"),
                        ("conclusion_date", "Действует с"), ("end_date", "Действует по"))
